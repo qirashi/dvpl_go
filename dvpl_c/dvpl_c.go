@@ -6,13 +6,14 @@ package dvpl
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/lz4_win64/include
-#cgo LDFLAGS: -L${SRCDIR}/lz4_win64/static -llz4
+#cgo LDFLAGS: -L${SRCDIR}/lz4_win64/static -lliblz4_static
 
 #include <lz4.h>
 #include <lz4hc.h>
 #include <stdlib.h>
 */
 import "C"
+
 import (
 	"bytes"
 	"compress/zlib"
