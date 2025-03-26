@@ -1,0 +1,12 @@
+compress: 5
+keepOriginal: false
+# inputPath: "./input_dir"
+# outputPath: "./output_dir"
+# compressFlag: false
+# decompressFlag: false
+ignorePatterns:
+  - "*.exe"
+  - "*.dll"
+  - "*.pdb"
+  - "*.pak"
+  # - "temp*"
