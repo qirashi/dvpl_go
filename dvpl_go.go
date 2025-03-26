@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"runtime"
 
 	"github.com/eiannone/keyboard"
 	"gopkg.in/yaml.v3"
@@ -31,6 +32,8 @@ type Config struct {
 }
 
 func main() {
+	maxCPU := runtime.NumCPU()
+	
 	compressFlag   := flag.Bool("c", false, "Compress .dvpl files")
 	decompressFlag := flag.Bool("d", false, "Decompress .dvpl files")
 	inputPath      := flag.String("i", "", "Input path (file or directory)")
@@ -38,7 +41,7 @@ func main() {
 	keepOriginal   := flag.Bool("keep-original", false, "Keep original files")
 	compressType   := flag.Int("compress", 1, "Compression type: 0 (none), 1 (lz4hc), 2 (lz4) |")
 	ignorePatterns := flag.String("ignore", "", "Comma-separated list of file patterns to ignore")
-	maxWorkers     := flag.Int("m", 1, "Maximum number of parallel workers. When used, 2 are recommended, with a maximum of 6.")
+	maxWorkers     := flag.Int("m", 1, fmt.Sprintf("Maximum number of parallel workers (%d). Minimum 1, recommended 2.", maxCPU))
 
 	flag.Usage = func() {
 		fmt.Println(`Usage: dvpl_go [options]
@@ -107,6 +110,13 @@ Examples:
 		ignoreList = strings.Split(*ignorePatterns, ",")
 	}
 
+	if *maxWorkers < 1 {
+		*maxWorkers = 1
+	} else if *maxWorkers > maxCPU {
+		fmt.Printf("[info]  maxWorkers value %d is too high, using maximum %d\n", *maxWorkers, maxCPU)
+		*maxWorkers = maxCPU
+	}
+
 	debugPrintFlags(config, *compressFlag, *decompressFlag, *inputPath, *outputPath, *keepOriginal, *compressType, ignoreList, *maxWorkers)
 
 	if *compressFlag {
@@ -121,14 +131,12 @@ func debugPrintFlags(c *Config, compressFlag, decompressFlag bool, inputPath, ou
 
 	var flags []string
 
-	// Всегда показывать режим
 	if compressFlag {
 		flags = append(flags, "-c")
 	} else {
 		flags = append(flags, "-d")
 	}
 
-	// Показывать все остальные параметры, даже если они из конфига
 	flags = append(flags, fmt.Sprintf("-i \"%s\"", inputPath))
 	if outputPath != inputPath {
 		flags = append(flags, fmt.Sprintf("-o \"%s\"", outputPath))
@@ -142,7 +150,6 @@ func debugPrintFlags(c *Config, compressFlag, decompressFlag bool, inputPath, ou
 	}
 	flags = append(flags, fmt.Sprintf("-m %d", maxWorkers))
 
-	// Добавить пометку о конфиге
 	source := "cmd"
 	if c != nil {
 		source = "cfg"
@@ -247,20 +254,17 @@ func processFiles(inputPath, outputPath string, processor func(string, string, i
 			errors := make(chan error, maxWorkers*2)
 			var wg sync.WaitGroup
 
-			// Запускаем worker'ов
 			for i := 0; i < maxWorkers; i++ {
 				wg.Add(1)
 				go worker(tasks, errors, &wg)
 			}
 
-			// Собираем ошибки
 			go func() {
 				for err := range errors {
 					fmt.Printf("[error] %v\n", err)
 				}
 			}()
 
-			// Обход файлов и отправка задач в канал
 			filepath.Walk(inputPath, func(path string, info os.FileInfo, err error) error {
 				if err != nil {
 					fmt.Printf("[error] Error accessing path %s: %v\n", path, err)
@@ -351,10 +355,10 @@ func worker(tasks <-chan task, errors chan<- error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for task := range tasks {
 		if err := task.processor(task.path, task.outPath, task.compressType); err != nil {
-			errors <- fmt.Errorf("processing file %s: %v", task.path, err)
+			errors <- fmt.Errorf("Processing file %s: %v", task.path, err)
 		} else if !task.keepOriginal {
 			if err := os.Remove(task.path); err != nil {
-				errors <- fmt.Errorf("removing original file %s: %v", task.path, err)
+				errors <- fmt.Errorf("Removing original file %s: %v", task.path, err)
 			}
 		}
 	}
@@ -375,7 +379,6 @@ func interactiveMode() {
 		// Очистка экрана
 		fmt.Print("\033[H\033[2J")
 
-		// Отображение меню
 		for i, option := range options {
 			if i == selectedIndex {
 				fmt.Printf("> %s\n", option)
@@ -384,7 +387,6 @@ func interactiveMode() {
 			}
 		}
 
-		// Чтение нажатия клавиши
 		event := <-keysEvents
 		if event.Err != nil {
 			fmt.Printf("[error] Keyboard error: %v\n", event.Err)
