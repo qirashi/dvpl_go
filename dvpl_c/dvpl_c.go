@@ -152,24 +152,6 @@ func Pack(inputPath, outputPath string, compressType int) error {
 			result = compressed
 			ptype = 2 // LZ4
 		}
-	case 3: // rfc1951 (zlib)
-		var compressed bytes.Buffer
-		writer := zlib.NewWriter(&compressed)
-		if _, err := writer.Write(data); err != nil {
-			return fmt.Errorf("[error] Failed to compress data with zlib: %v", err)
-		}
-		if err := writer.Close(); err != nil {
-			return fmt.Errorf("[error] Failed to close zlib writer: %v", err)
-		}
-
-		// Если сжатые данные больше или равны исходным, не сжимаем
-		if compressed.Len() >= len(data) {
-			result = data
-			ptype = 0 // Без сжатия
-		} else {
-			result = compressed.Bytes()
-			ptype = 3 // rfc1951
-		}
 	default:
 		return fmt.Errorf("[error] Unsupported compression type: %d", compressType)
 	}
