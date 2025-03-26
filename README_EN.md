@@ -77,3 +77,10 @@ Examples:
         - "*.pdb"
         - "*.pak"
         - "temp*"
+
+- `-m` is the maximum number of parallel handlers (workers).
+    - Default: 1 (single-threaded mode)
+    - Optimal value: 2-4 (depends on CPU)
+    - When values > maximum are specified, it is automatically adjusted.
+    - The maximum number depends on the cores and threads of the processor.
+    > **There may be problems with multithreaded mode running on energy-efficient cores from Intel.**
