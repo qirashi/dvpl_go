@@ -1,10 +1,12 @@
-compress: 5
-keepOriginal: false
-# inputPath: "./input_dir"
-# outputPath: "./output_dir"
-# compressFlag: false
-# decompressFlag: false
-ignorePatterns:
+# Конфигурация для dvpl_go
+# inputPath: "./input"   # (-i)
+# outputPath: "./output" # (-o)
+# compressFlag: false    # (-c)
+# decompressFlag: false  # (-d)
+keepOriginal: false    # (-keep-original)
+compress: 1            # (-compress)
+# maxWorkers: 2          # (-m)
+ignorePatterns:        # (-ignore)
   - "*.exe"
   - "*.dll"
   - "*.pdb"

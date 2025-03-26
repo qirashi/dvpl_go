@@ -22,18 +22,20 @@ Dvpl converter to Go Lang. (Using the "C" code)
 [debug] Config file found: .dvpl_go.yml
 Usage: dvpl_go [options]
 Options:
--c | -d
-        Compress|Decompress .dvpl files
--i string
+  -c    Compress .dvpl files
+  -compress int
+        Compression type: 0 (none), 1 (lz4hc), 2 (lz4) | (default 1)
+  -d    Decompress .dvpl files
+  -i string
         Input path (file or directory)
--o string
-        Output path (file or directory)
--keep-original
-        Keep original files
--compress int
-        Compression type 0 (none), 1 (lz4hc), 2 (lz4) | (default 1)
--ignore string
+  -ignore string
         Comma-separated list of file patterns to ignore
+  -keep-original
+        Keep original files
+  -m int
+        Maximum number of parallel workers. When used, 2 are recommended, with a maximum of 6. (default 1)
+  -o string
+        Output path (file or directory)
 
 Examples:
   Compress   : dvpl_go -c -i ./input_dir -o ./output_dir
