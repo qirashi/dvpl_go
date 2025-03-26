@@ -4,9 +4,6 @@ Dvpl converter to Go Lang. (Using the "C" code)
  > [!NOTE]
  > In this converter, the [lz4](https://github.com/lz4/lz4) library was used to speed up compression and improve its quality.
 
- > [!WARNING]
- > There will be no instructions on how to build using `dvpl_c`, if anyone is interested, figure it out on your own.
-
 ## Description
 
 ### Supported compression types
@@ -80,18 +77,3 @@ Examples:
         - "*.pdb"
         - "*.pak"
         - "temp*"
-
-## Building the Project
-
-### Rebuild `.mod` and `.sum`
-1. Open a terminal in the project directory and execute the commands below.
-2. `go mod init dvpl_go`
-3. `go mod tidy`
-
----
-
-### Build with Icon
-1. Install `GO` on your PC.
-2. Open `_build_.bat` in a text editor.
-3. Edit the path to `ResourceHacker` or comment it out. (It is only needed for the icon.)
-4. Run `_build_.bat`.
