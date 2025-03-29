@@ -9,6 +9,3 @@ compress: 1            # (-compress)
 ignorePatterns:        # (-ignore)
   - "*.exe"
   - "*.dll"
-  - "*.pdb"
-  - "*.pak"
-  # - "temp*"

@@ -26,9 +26,9 @@ type Config struct {
 	InputPath      string   `yaml:"inputPath"`
 	OutputPath     string   `yaml:"outputPath"`
 	KeepOriginal   bool     `yaml:"keepOriginal"`
-	compressType   int      `yaml:"compress"`
+	CompressType   int      `yaml:"compress"`
 	IgnorePatterns []string `yaml:"ignorePatterns"`
-	maxWorkers     int      `yaml:"maxWorkers"`
+	MaxWorkers     int      `yaml:"maxWorkers"`
 }
 
 func main() {
@@ -74,11 +74,11 @@ Examples:
 		if config.KeepOriginal {
 			*keepOriginal = true
 		}
-		if config.compressType != 0 {
-			*compressType = config.compressType
+		if config.CompressType != 0 {
+			*compressType = config.CompressType
 		}
-		if config.maxWorkers != 0 {
-			*maxWorkers = config.maxWorkers
+		if config.MaxWorkers != 0 {
+			*maxWorkers = config.MaxWorkers
 		}
 		if len(config.IgnorePatterns) > 0 {
 			*ignorePatterns = strings.Join(config.IgnorePatterns, ",")
