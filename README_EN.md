@@ -84,3 +84,48 @@ Examples:
     - When values > maximum are specified, it is automatically adjusted.
     - The maximum number depends on the cores and threads of the processor.
     > **There may be problems with multithreaded mode running on energy-efficient cores from Intel.**
+
+## Comparison of operation speed and compression
+
+### This converter is on GoLang
+```cmd
+Start:     16:2:41.15
+The end:   16:3:17.60
+-----------------
+Total: 0 h 0 min 36.45 sec
+
+Weight: 1.15 GB (1,244,843,076 bytes)
+```
+
+### This converter is for GoLang with multithreading
+```cmd
+Start:     16:4:43.85
+The end:   16:5:2.78
+-----------------
+Total: 0 h 0 min 18.93 sec
+
+Weight: 1.15 GB (1,244,843,076 bytes)
+```
+
+### Another NodeJS converter
+```cmd
+Start:     15:59:13.41
+The end:   16:0:10.19
+-----------------
+Total: 0 h 0 min 56.78 sec
+
+Weight: 1.15 GB (1,243,007,962 bytes)
+```
+
+### Another converter for GoLang
+```cmd
+Start:     16:18:37.28
+The end:   16:18:43.51
+-----------------
+Total: 0 h 0 min 6.23 sec
+
+Weight: 2.81 GB (3,020,488,406 bytes)
+```
+
+### Results
+- This converter is the best option at the moment. It allows you to select the compression level, which directly affects the speed of file compression and supports multithreaded mode. In the lz4hc compression mode, it surpasses its classmates in speed and is not inferior in compression quality. Another GoLang converter used `lz4`, which compresses worse, but faster (it was impossible to change the compression mode). The same converter is fast and supports all available methods.
