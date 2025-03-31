@@ -67,7 +67,7 @@ Examples:
     - `image_[xyz].png` — игнорировать файлы `image_x.png`, `image_y.png`, `image_z.png`.
 
     #### Содержимое .dvpl_go.yml:
-        compress: 5
+        compress: 1
         keepOriginal: false
         inputPath: "./input_dir"
         outputPath: "./output_dir"
