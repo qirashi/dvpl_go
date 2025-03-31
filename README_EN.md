@@ -1,5 +1,4 @@
 # dvpl_go [RU](README.md) | [EN]
-Dvpl converter to Go Lang. (Using the "C" code)
 
  > [!NOTE]
  > In this converter, the [lz4](https://github.com/lz4/lz4) library was used to speed up compression and improve its quality.
