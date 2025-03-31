@@ -3,6 +3,9 @@
  > [!NOTE]
  > In this converter, the [lz4](https://github.com/lz4/lz4) library was used to speed up compression and improve its quality.
 
+## How to use the converter?
+* [Guide in English](.readme/how_to_use_en.md)
+
 ## Description
 
 ### Supported compression types
