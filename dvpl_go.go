@@ -5,7 +5,6 @@
 package main
 
 import (
-	// dvpl "dvpl_go/dvpl"
 	dvpl "dvpl_go/dvpl_c"
 
 	"flag"
@@ -19,6 +18,8 @@ import (
 	"github.com/eiannone/keyboard"
 	"gopkg.in/yaml.v3"
 )
+
+var fileMutex sync.Mutex
 
 type Config struct {
 	CompressFlag   bool     `yaml:"compressFlag"`
@@ -120,10 +121,97 @@ Examples:
 	debugPrintFlags(config, *compressFlag, *decompressFlag, *inputPath, *outputPath, *keepOriginal, *compressType, ignoreList, *maxWorkers)
 
 	if *compressFlag {
-		processFiles(*inputPath, *outputPath, dvpl.Pack, ".dvpl", *keepOriginal, *compressFlag, *compressType, ignoreList, *maxWorkers)
+		processFiles(*inputPath, *outputPath, Pack, ".dvpl", *keepOriginal, *compressFlag, *compressType, ignoreList, *maxWorkers)
 	} else if *decompressFlag {
-		processFiles(*inputPath, *outputPath, dvpl.Unpack, "", *keepOriginal, *compressFlag, *compressType, ignoreList, *maxWorkers)
+		processFiles(*inputPath, *outputPath, Unpack, "", *keepOriginal, *compressFlag, *compressType, ignoreList, *maxWorkers)
 	}
+}
+
+func getCompressionTypeString(compressionType uint32) string {
+    switch compressionType {
+    case 0:
+        return "none"
+    case 1:
+        return "lz4hc"
+    case 2:
+        return "lz4"
+    case 3:
+        return "rfc1951"
+    default:
+        return fmt.Sprintf("unknown(%d)", compressionType)
+    }
+}
+
+func Pack(inputPath, outputPath string, compressType int) error {
+	
+	fileMutex.Lock()
+	// fmt.Printf("Pack: %s\n", inputPath)
+	data, err := os.ReadFile(inputPath)
+	fileMutex.Unlock()
+	
+	if err != nil {
+		return fmt.Errorf("[error] Failed to read input file: %v", err)
+	}
+
+	// Обработка данных без блокировки (может выполняться параллельно)
+	dvplData, compressionType, err := dvpl.Pack(data, compressType)
+	if err != nil {
+		return fmt.Errorf("[error] Failed to pack data: %v", err)
+	}
+
+	fmt.Printf("Pack [%s]: %s\n", getCompressionTypeString(compressionType), inputPath)
+
+	// Блокируем только на время записи файла
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+
+	if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
+		return fmt.Errorf("[error] Failed to create output directory: %v", err)
+	}
+
+	if err := os.WriteFile(outputPath, dvplData, 0644); err != nil {
+		return fmt.Errorf("[error] Failed to write output file: %v", err)
+	}
+
+	return nil
+}
+
+func Unpack(inputPath, outputPath string, _ int) error {
+	
+	fileMutex.Lock()
+	// fmt.Printf("Unpack: %s\n", inputPath)
+	dvplData, err := os.ReadFile(inputPath)
+	fileMutex.Unlock()
+
+	if err != nil {
+		return fmt.Errorf("[error] Failed to read input file: %v", err)
+	}
+
+	// Обработка данных без блокировки (может выполняться параллельно)
+	data, compressionType, err := dvpl.Unpack(dvplData)
+	if err != nil {
+		return fmt.Errorf("[error] Failed to unpack data: %v", err)
+	}
+
+	fmt.Printf("Unpack [%s]: %s\n", getCompressionTypeString(compressionType), inputPath)
+
+	if strings.HasSuffix(outputPath, ".dvpl") {
+		outputPath = strings.TrimSuffix(outputPath, ".dvpl")
+	}
+
+	// Блокируем только на время записи файла
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+
+	if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
+		return fmt.Errorf("[error] Failed to create output directory: %v", err)
+	}
+
+	if err := os.WriteFile(outputPath, data, 0644); err != nil {
+		return fmt.Errorf("[error] Failed to write output file: %v", err)
+	}
+
+	return nil
 }
 
 func debugPrintFlags(c *Config, compressFlag, decompressFlag bool, inputPath, outputPath string, 
@@ -460,7 +548,7 @@ func compressInteractive() {
 		case keyboard.KeyEnter:
 			selectedCompressionType := compressionTypes[selectedIndex]
 			fmt.Println("\nYou selected compression type:", options[selectedIndex])
-			processFiles(".", ".", dvpl.Pack, ".dvpl", false, true, selectedCompressionType, nil, 1)
+			processFiles(".", ".", Pack, ".dvpl", false, true, selectedCompressionType, nil, 1)
 			return
 		}
 	}
@@ -468,5 +556,5 @@ func compressInteractive() {
 
 func decompressInteractive() {
 	fmt.Println("Decompressing files in current directory...")
-	processFiles(".", ".", dvpl.Unpack, "", false, false, 0, nil, 1)
+	processFiles(".", ".", Unpack, "", false, false, 0, nil, 1)
 }

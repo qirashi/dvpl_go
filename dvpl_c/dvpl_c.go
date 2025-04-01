@@ -1,8 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2025 Qirashi
-// Project: dvpl_go
-
-package dvpl
+package dvpl_c
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/lz4_win64/include
@@ -21,9 +17,6 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
-	"os"
-	"path/filepath"
-	"strings"
 	"unsafe"
 )
 
@@ -103,16 +96,8 @@ func decompressLZ4(compressed []byte, uncompressedSize int) ([]byte, error) {
 	return uncompressed[:decompressedSize], nil
 }
 
-// Pack сжимает файл и добавляет DVPL-футер
-func Pack(inputPath, outputPath string, compressType int) error {
-	fmt.Printf("Pack: %s\n", inputPath)
-
-	// Читаем данные из файла
-	data, err := os.ReadFile(inputPath)
-	if err != nil {
-		return fmt.Errorf("[error] Failed to read input file: %v", err)
-	}
-
+// Pack сжимает данные и добавляет DVPL-футер
+func Pack(data []byte, compressType int) ([]byte, uint32, error) {
 	if len(data) == 0 {
 		compressType = 0
 	}
@@ -127,11 +112,11 @@ func Pack(inputPath, outputPath string, compressType int) error {
 	case 1: // LZ4 HC
 		compressed, err := compressLZ4(data, 9) // Уровень 9 для HC
 		if err != nil {
-			return fmt.Errorf("[error] Failed to compress data: %v", err)
+			return result, ptype, fmt.Errorf("[error] Failed to compress data: %v", err)
 		}
 
 		// Если сжатые данные больше или равны исходным, не сжимаем
-		if len(compressed) == 0 || len(compressed) >= len(data) {
+		if len(compressed) >= len(data) {
 			result = data
 			ptype = 0 // Без сжатия
 		} else {
@@ -141,11 +126,11 @@ func Pack(inputPath, outputPath string, compressType int) error {
 	case 2: // LZ4
 		compressed, err := compressLZ4(data, 0) // Уровень 0 для обычного LZ4
 		if err != nil {
-			return fmt.Errorf("[error] Failed to compress data: %v", err)
+			return result, ptype, fmt.Errorf("[error] Failed to compress data: %v", err)
 		}
 
 		// Если сжатые данные больше или равны исходным, не сжимаем
-		if len(compressed) == 0 || len(compressed) >= len(data) {
+		if len(compressed) >= len(data) {
 			result = data
 			ptype = 0 // Без сжатия
 		} else {
@@ -153,7 +138,7 @@ func Pack(inputPath, outputPath string, compressType int) error {
 			ptype = 2 // LZ4
 		}
 	default:
-		return fmt.Errorf("[error] Unsupported compression type: %d", compressType)
+		return result, ptype, fmt.Errorf("[error] Unsupported compression type: %d", compressType)
 	}
 
 	// Вычисляем CRC32 для результата
@@ -177,54 +162,25 @@ func Pack(inputPath, outputPath string, compressType int) error {
 		Marker:   [4]byte{'D', 'V', 'P', 'L'},
 	}
 
-	// Записываем результат и футер в выходной файл
-	outFile, err := os.Create(outputPath)
-	if err != nil {
-		return fmt.Errorf("[error] Failed to create output file: %v", err)
+	// Добавляем футер к результату
+	var footerBuf bytes.Buffer
+	if err := binary.Write(&footerBuf, binary.LittleEndian, footer); err != nil {
+		return result, ptype, fmt.Errorf("[error] Failed to write footer: %v", err)
 	}
-	defer outFile.Close()
+	result = append(result, footerBuf.Bytes()...)
 
-	// Записываем данные
-	if _, err := outFile.Write(result); err != nil {
-		return fmt.Errorf("[error] Failed to write data: %v", err)
-	}
-
-	// Записываем футер
-	if err := binary.Write(outFile, binary.LittleEndian, footer); err != nil {
-		return fmt.Errorf("[error] Failed to write footer: %v", err)
-	}
-
-	return nil
+	return result, ptype, nil
 }
 
-// Unpack распаковывает DVPL-файл
-func Unpack(inputPath, outputPath string, _ int) error {
-	file, err := os.Open(inputPath)
-	if err != nil {
-		return fmt.Errorf("[error] Failed to open input file: %v", err)
-	}
-	defer file.Close()
-
-	fileInfo, err := file.Stat()
-	if err != nil {
-		return fmt.Errorf("[error] Failed to get file info: %v", err)
+// Unpack распаковывает DVPL-данные
+func Unpack(data []byte) ([]byte, uint32, error) {
+	if len(data) < FooterSize {
+		return nil, 0, fmt.Errorf("[error] Data too small to contain footer")
 	}
 
-	fileSize := fileInfo.Size()
-	if fileSize < FooterSize {
-		return fmt.Errorf("[error] File too small to contain footer")
-	}
-
-	// Читаем футер
-	_, err = file.Seek(fileSize-FooterSize, io.SeekStart)
-	if err != nil {
-		return fmt.Errorf("[error] Failed to seek to footer: %v", err)
-	}
-
-	footerData := make([]byte, FooterSize)
-	if _, err := io.ReadFull(file, footerData); err != nil {
-		return fmt.Errorf("[error] Failed to read footer: %v", err)
-	}
+	// Читаем футер (последние FooterSize байт)
+	footerData := data[len(data)-FooterSize:]
+	data = data[:len(data)-FooterSize] // Отрезаем футер от сжатых данных
 
 	footer := struct {
 		Unpacked uint32
@@ -235,89 +191,43 @@ func Unpack(inputPath, outputPath string, _ int) error {
 	}{}
 
 	if err := binary.Read(bytes.NewReader(footerData), binary.LittleEndian, &footer); err != nil {
-		return fmt.Errorf("[error] Failed to parse footer: %v", err)
+		return nil, footer.PType, fmt.Errorf("[error] Failed to parse footer: %v", err)
 	}
 
 	if string(footer.Marker[:]) != Marker {
-		return fmt.Errorf("[error] Invalid marker: %s", footer.Marker)
-	}
-
-	// Выводим тип сжатия
-	var compressionType string
-	switch footer.PType {
-	case 0:
-		compressionType = "none"
-	case 1:
-		compressionType = "lz4hc"
-	case 2:
-		compressionType = "lz4"
-	case 3:
-		compressionType = "rfc1951"
-	default:
-		compressionType = "unknown"
-	}
-	fmt.Printf("Unpack %s: %s\n", compressionType, inputPath)
-
-	// Читаем сжатые данные
-	_, err = file.Seek(0, io.SeekStart)
-	if err != nil {
-		return fmt.Errorf("[error] Failed to seek to start: %v", err)
-	}
-
-	compressedData := make([]byte, footer.Packed)
-	if _, err := io.ReadFull(file, compressedData); err != nil {
-		return fmt.Errorf("[error] Failed to read compressed data: %v", err)
+		return nil, footer.PType, fmt.Errorf("[error] Invalid marker: %s", footer.Marker)
 	}
 
 	// Проверяем CRC32
-	if crc32.ChecksumIEEE(compressedData) != footer.CRC {
-		return fmt.Errorf("[error] CRC32 mismatch")
+	if crc32.ChecksumIEEE(data) != footer.CRC {
+		return nil, footer.PType, fmt.Errorf("[error] CRC32 mismatch")
 	}
 
-	// Распаковываем данные
 	var result []byte
+	var err error // Объявляем error здесь, чтобы использовать во всех case
+
 	switch footer.PType {
 	case 0: // Без сжатия
-		result = compressedData
+		result = data
 	case 1, 2: // lz4
-		result, err = decompressLZ4(compressedData, int(footer.Unpacked))
+		result, err = decompressLZ4(data, int(footer.Unpacked)) // Используем = вместо :=
 		if err != nil {
-			return fmt.Errorf("[error] Failed to decompress LZ4 data: %v", err)
+			return nil, footer.PType, fmt.Errorf("[error] Failed to decompress LZ4 data: %v", err)
 		}
 	case 3: // rfc1951
-		reader, err := zlib.NewReader(bytes.NewReader(compressedData))
+		var reader io.ReadCloser
+		reader, err = zlib.NewReader(bytes.NewReader(data))
 		if err != nil {
-			return fmt.Errorf("[error] Failed to create zlib reader: %v", err)
+			return nil, footer.PType, fmt.Errorf("[error] Failed to create zlib reader: %v", err)
 		}
 		defer reader.Close()
 		result, err = io.ReadAll(reader)
 		if err != nil {
-			return fmt.Errorf("[error] Failed to decompress zlib data: %v", err)
+			return nil, footer.PType, fmt.Errorf("[error] Failed to decompress zlib data: %v", err)
 		}
 	default:
-		return fmt.Errorf("[error] Unsupported compression type: %d", footer.PType)
+		return nil, footer.PType, fmt.Errorf("[error] Unsupported compression type: %d", footer.PType)
 	}
 
-	// Убираем расширение .dvpl из имени файла
-	if strings.HasSuffix(outputPath, ".dvpl") {
-		outputPath = strings.TrimSuffix(outputPath, ".dvpl")
-	}
-
-	// Создаем директорию, если она не существует
-	if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
-		return fmt.Errorf("[error] Failed to create output directory: %v", err)
-	}
-
-	// Записываем распакованные данные в выходной файл
-	outFile, err := os.Create(outputPath)
-	if err != nil {
-		return fmt.Errorf("[error] Failed to create output file: %v", err)
-	}
-	defer outFile.Close()
-
-	if _, err := outFile.Write(result); err != nil {
-		return fmt.Errorf("[error] Failed to write decompressed data: %v", err)
-	}
-
-	return nil
+	return result, footer.PType, nil
 }
