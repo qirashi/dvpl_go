@@ -145,7 +145,6 @@ func getCompressionTypeString(compressionType uint32) string {
 func Pack(inputPath, outputPath string, compressType int) error {
 	
 	fileMutex.Lock()
-	// fmt.Printf("Pack: %s\n", inputPath)
 	data, err := os.ReadFile(inputPath)
 	fileMutex.Unlock()
 	
@@ -179,7 +178,6 @@ func Pack(inputPath, outputPath string, compressType int) error {
 func Unpack(inputPath, outputPath string, _ int) error {
 	
 	fileMutex.Lock()
-	// fmt.Printf("Unpack: %s\n", inputPath)
 	dvplData, err := os.ReadFile(inputPath)
 	fileMutex.Unlock()
 
@@ -275,6 +273,32 @@ func readConfig() *Config {
 	return &config
 }
 
+func shouldProcessFile(path string, info os.FileInfo, exeFileName string, compressFlag bool, ignorePatterns []string) bool {
+	if compressFlag && (info.Name() == ".dvpl_go.yml" || info.Name() == exeFileName) {
+		fmt.Printf("Excluding file: %s\n", path)
+		return false
+	}
+
+	if compressFlag && strings.HasSuffix(info.Name(), ".dvpl") {
+		fmt.Printf("Skip .dvpl file: %s\n", path)
+		return false
+	}
+
+	if !compressFlag && !strings.HasSuffix(info.Name(), ".dvpl") {
+		fmt.Printf("Skip file: %s\n", path)
+		return false
+	}
+
+	for _, pattern := range ignorePatterns {
+		if matched, _ := filepath.Match(pattern, info.Name()); matched {
+			fmt.Printf("Ignoring file: %s\n", path)
+			return false
+		}
+	}
+
+	return true
+}
+
 func processFiles(inputPath, outputPath string, processor func(string, string, int) error, newExt string, keepOriginal bool, compressFlag bool, compressType int, ignorePatterns []string, maxWorkers int) {
 	info, err := os.Stat(inputPath)
 	if err != nil {
@@ -286,7 +310,7 @@ func processFiles(inputPath, outputPath string, processor func(string, string, i
 
 	if info.IsDir() {
 		if maxWorkers <= 1 {
-			// Однопоточный режим (оригинальная логика)
+			// Однопоточный режим
 			filepath.Walk(inputPath, func(path string, info os.FileInfo, err error) error {
 				if err != nil {
 					fmt.Printf("[error] Error accessing path %s: %v\n", path, err)
@@ -294,38 +318,14 @@ func processFiles(inputPath, outputPath string, processor func(string, string, i
 				}
 
 				if !info.IsDir() {
-					if compressFlag && (info.Name() == ".dvpl_go.yml" || info.Name() == exeFileName) {
-						fmt.Printf("Excluding file: %s\n", path)
+					if !shouldProcessFile(path, info, exeFileName, compressFlag, ignorePatterns) {
 						return nil
-					}
-
-					if compressFlag && strings.HasSuffix(info.Name(), ".dvpl") {
-						fmt.Printf("Skip .dvpl file: %s\n", path)
-						return nil
-					}
-
-					if !compressFlag && !strings.HasSuffix(info.Name(), ".dvpl") {
-						fmt.Printf("Skip file: %s\n", path)
-						return nil
-					}
-
-					for _, pattern := range ignorePatterns {
-						if matched, _ := filepath.Match(pattern, info.Name()); matched {
-							fmt.Printf("Ignoring file: %s\n", path)
-							return nil
-						}
 					}
 
 					relativePath, _ := filepath.Rel(inputPath, path)
 					outPath := filepath.Join(outputPath, relativePath)
-
 					if newExt != "" {
 						outPath += newExt
-					}
-
-					if err := os.MkdirAll(filepath.Dir(outPath), os.ModePerm); err != nil {
-						fmt.Printf("[error] Error creating output directory: %v\n", err)
-						return nil
 					}
 
 					if err := processor(path, outPath, compressType); err != nil {
@@ -360,38 +360,14 @@ func processFiles(inputPath, outputPath string, processor func(string, string, i
 				}
 
 				if !info.IsDir() {
-					if compressFlag && (info.Name() == ".dvpl_go.yml" || info.Name() == exeFileName) {
-						fmt.Printf("Excluding file: %s\n", path)
+					if !shouldProcessFile(path, info, exeFileName, compressFlag, ignorePatterns) {
 						return nil
-					}
-
-					if compressFlag && strings.HasSuffix(info.Name(), ".dvpl") {
-						fmt.Printf("Skip .dvpl file: %s\n", path)
-						return nil
-					}
-
-					if !compressFlag && !strings.HasSuffix(info.Name(), ".dvpl") {
-						fmt.Printf("Skip file: %s\n", path)
-						return nil
-					}
-
-					for _, pattern := range ignorePatterns {
-						if matched, _ := filepath.Match(pattern, info.Name()); matched {
-							fmt.Printf("Ignoring file: %s\n", path)
-							return nil
-						}
 					}
 
 					relativePath, _ := filepath.Rel(inputPath, path)
 					outPath := filepath.Join(outputPath, relativePath)
-
 					if newExt != "" {
 						outPath += newExt
-					}
-
-					if err := os.MkdirAll(filepath.Dir(outPath), os.ModePerm); err != nil {
-						fmt.Printf("[error] Error creating output directory: %v\n", err)
-						return nil
 					}
 
 					tasks <- task{
@@ -410,7 +386,7 @@ func processFiles(inputPath, outputPath string, processor func(string, string, i
 			close(errors)
 		}
 	} else {
-		// Обработка одиночного файла (без изменений)
+		// Обработка одиночного файла
 		if compressFlag && strings.HasSuffix(inputPath, ".dvpl") {
 			fmt.Printf("Skipping .dvpl file: %s\n", inputPath)
 			return
@@ -466,6 +442,7 @@ func interactiveMode() {
 	for {
 		// Очистка экрана
 		fmt.Print("\033[H\033[2J")
+		fmt.Println("Usage: dvpl_go [-h] - To get help.")
 
 		for i, option := range options {
 			if i == selectedIndex {
@@ -517,7 +494,6 @@ func compressInteractive() {
 	selectedIndex := 1
 
 	for {
-
 		fmt.Print("\033[H\033[2J")
 
 		for i, option := range options {
