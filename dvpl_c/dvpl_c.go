@@ -1,12 +1,15 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) 2025 Qirashi
+// Project: dvpl_go
+
 package dvpl_c
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/lz4_win64/include
-#cgo LDFLAGS: -L${SRCDIR}/lz4_win64/static -lliblz4_static
+#cgo CFLAGS: -I${SRCDIR}/lz4_win64/include -O3 -flto
+#cgo LDFLAGS: -L${SRCDIR}/lz4_win64/static -lliblz4_static -Wl,-O1 -Wl,--as-needed
 
 #include <lz4.h>
 #include <lz4hc.h>
-#include <stdlib.h>
 */
 import "C"
 
@@ -52,21 +55,10 @@ func compressLZ4(data []byte, level int) ([]byte, error) {
 	var compressedSize int
 	if level > 0 {
 		// Используем LZ4 HC
-		compressedSize = int(C.LZ4_compress_HC(
-			src,
-			dst,
-			C.int(len(data)),
-			C.int(bound),
-			C.int(level),
-		))
+		compressedSize = int(C.LZ4_compress_HC(src, dst, C.int(len(data)), C.int(bound), C.int(level)))
 	} else {
 		// Используем обычный LZ4
-		compressedSize = int(C.LZ4_compress_default(
-			src,
-			dst,
-			C.int(len(data)),
-			C.int(bound),
-		))
+		compressedSize = int(C.LZ4_compress_default(src, dst, C.int(len(data)), C.int(bound)))
 	}
 
 	if compressedSize <= 0 {
@@ -82,12 +74,7 @@ func decompressLZ4(compressed []byte, uncompressedSize int) ([]byte, error) {
 	src := (*C.char)(unsafe.Pointer(&compressed[0]))
 	dst := (*C.char)(unsafe.Pointer(&uncompressed[0]))
 
-	decompressedSize := int(C.LZ4_decompress_safe(
-		src,
-		dst,
-		C.int(len(compressed)),
-		C.int(uncompressedSize),
-	))
+	decompressedSize := int(C.LZ4_decompress_safe(src, dst, C.int(len(compressed)), C.int(uncompressedSize)))
 
 	if decompressedSize < 0 {
 		return nil, fmt.Errorf("LZ4 decompression failed")
@@ -97,7 +84,7 @@ func decompressLZ4(compressed []byte, uncompressedSize int) ([]byte, error) {
 }
 
 // Pack сжимает данные и добавляет DVPL-футер
-func Pack(data []byte, compressType int) ([]byte, uint32, error) {
+func Pack(data []byte, compressType int, forcedCompress bool) ([]byte, uint32, error) {
 	if len(data) == 0 {
 		compressType = 0
 	}
@@ -116,7 +103,7 @@ func Pack(data []byte, compressType int) ([]byte, uint32, error) {
 		}
 
 		// Если сжатые данные больше или равны исходным, не сжимаем
-		if len(compressed) >= len(data) {
+		if !forcedCompress && len(compressed) >= len(data) {
 			result = data
 			ptype = 0 // Без сжатия
 		} else {
@@ -130,7 +117,7 @@ func Pack(data []byte, compressType int) ([]byte, uint32, error) {
 		}
 
 		// Если сжатые данные больше или равны исходным, не сжимаем
-		if len(compressed) >= len(data) {
+		if !forcedCompress && len(compressed) >= len(data) {
 			result = data
 			ptype = 0 // Без сжатия
 		} else {
@@ -175,7 +162,7 @@ func Pack(data []byte, compressType int) ([]byte, uint32, error) {
 // Unpack распаковывает DVPL-данные
 func Unpack(data []byte) ([]byte, uint32, error) {
 	if len(data) < FooterSize {
-		return nil, 0, fmt.Errorf("[error] Data too small to contain footer")
+		return nil, 0, fmt.Errorf("invalid DVPL data: size %d is less than footer size %d", len(data), FooterSize)
 	}
 
 	// Читаем футер (последние FooterSize байт)
