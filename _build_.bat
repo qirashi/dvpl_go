@@ -23,16 +23,13 @@ if exist "%ResHack%" (
 	echo Иконка не установлена.
 )
 
-set TOOL1=%cd%\tools\upx.exe
-if defined UPX (
-    set "UPX="
-)
-if exist "%TOOL1%" (
-    echo UPX найден, выполняю команды...
-    "%TOOL1%" -9 "%cd%\out\dvpl_go.exe"
+where upx >nul 2>&1
+if %errorlevel% equ 0 (
+    echo UPX найден в PATH, выполняю команды...
+    upx -9 "%cd%\out\dvpl_go.exe"
 ) else (
-    echo Ошибка: UPX не найден по пути "%TOOL1%".
-	echo Exe не сжат UPX.
+    echo UPX не найден в переменных среды PATH.
+    echo Exe не сжат UPX.
 )
 
 @pause
