@@ -15,11 +15,9 @@ import "C"
 
 import (
 	"bytes"
-	"compress/zlib"
 	"encoding/binary"
 	"fmt"
 	"hash/crc32"
-	"io"
 	"unsafe"
 )
 
@@ -200,17 +198,6 @@ func Unpack(data []byte) ([]byte, uint32, error) {
 		result, err = decompressLZ4(data, int(footer.Unpacked)) // Используем = вместо :=
 		if err != nil {
 			return nil, footer.PType, fmt.Errorf("[error] Failed to decompress LZ4 data: %v", err)
-		}
-	case 3: // rfc1951
-		var reader io.ReadCloser
-		reader, err = zlib.NewReader(bytes.NewReader(data))
-		if err != nil {
-			return nil, footer.PType, fmt.Errorf("[error] Failed to create zlib reader: %v", err)
-		}
-		defer reader.Close()
-		result, err = io.ReadAll(reader)
-		if err != nil {
-			return nil, footer.PType, fmt.Errorf("[error] Failed to decompress zlib data: %v", err)
 		}
 	default:
 		return nil, footer.PType, fmt.Errorf("[error] Unsupported compression type: %d", footer.PType)

@@ -18,6 +18,7 @@
 ### Вывод в консоль
 
 ```cmd
+R:\Github\dvpl_go>dvpl_go.exe -h
 [debug] Config file found: .dvpl_go.yml
 Usage: dvpl_go [options]
 Options:
@@ -25,14 +26,18 @@ Options:
   -compress int
         Compression type: 0 (none), 1 (lz4hc), 2 (lz4) | (default 1)
   -d    Decompress .dvpl files
+  -forced-compress
+        Forced compression, even if the result is larger than the original
   -i string
         Input path (file or directory)
   -ignore string
         Comma-separated list of file patterns to ignore
+  -ignore-compress string
+        Comma-separated list of file patterns to force no compression (type 0)
   -keep-original
         Keep original files
   -m int
-        Maximum number of parallel workers. When used, 2 are recommended, with a maximum of 6. (default 1)
+        Maximum number of parallel workers (12). Minimum 1, recommended 2. (default 1)
   -o string
         Output path (file or directory)
 
@@ -40,6 +45,7 @@ Examples:
   Compress   : dvpl_go -c -i ./input_dir -o ./output_dir
   Decompress : dvpl_go -d -i ./input_dir -o ./output_dir
   Ignore     : dvpl_go -c -i ./input_dir -ignore "*.exe,*.dll"
+  No compress: dvpl_go -c -i ./input_dir -ignore-compress "*.webp"
   Compression: dvpl_go -c -i ./input_dir -compress 2
 ```
 
@@ -53,7 +59,7 @@ Examples:
     - `0` - `none`
     - `1` - `lz4hc`
     - `2` - `lz4`
-- `-ignore` - Список шаблонов файлов, которые следует игнорировать, разделенный запятыми.
+- `-ignore` и `-ignore-compress` - Список шаблонов файлов, которые следует игнорировать, разделенный запятыми.
     #### Поддерживаются следующие символы подстановки:
     - `*` — любое количество символов (кроме `/`).
     - `?` — один символ.
@@ -73,12 +79,15 @@ Examples:
         outputPath: "./output_dir"
         compressFlag: false
         decompressFlag: false
+		forcedCompress: false
         ignorePatterns:
         - "*.exe"
         - "*.dll"
         - "*.pdb"
         - "*.pak"
         - "temp*"
+        ignoreCompress:
+        - "*.webp"
 
 - `-m` - Максимальное количество параллельных обработчиков (workers).
     - По умолчанию: 1 (однопоточный режим)
@@ -99,7 +108,7 @@ Examples:
 Вес: 1,15 ГБ (1 244 843 076 байт)
 ```
 
-### Этот конвертер на GoLang с многопотоком
+### Этот конвертер на GoLang с многопотоком (2 workers)
 ```cmd
 Начало:   16:4:43.85
 Конец:    16:5:2.78

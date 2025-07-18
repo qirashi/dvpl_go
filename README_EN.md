@@ -18,6 +18,7 @@
 ### Console Output
 
 ```cmd
+R:\Github\dvpl_go>dvpl_go.exe -h
 [debug] Config file found: .dvpl_go.yml
 Usage: dvpl_go [options]
 Options:
@@ -25,14 +26,18 @@ Options:
   -compress int
         Compression type: 0 (none), 1 (lz4hc), 2 (lz4) | (default 1)
   -d    Decompress .dvpl files
+  -forced-compress
+        Forced compression, even if the result is larger than the original
   -i string
         Input path (file or directory)
   -ignore string
         Comma-separated list of file patterns to ignore
+  -ignore-compress string
+        Comma-separated list of file patterns to force no compression (type 0)
   -keep-original
         Keep original files
   -m int
-        Maximum number of parallel workers. When used, 2 are recommended, with a maximum of 6. (default 1)
+        Maximum number of parallel workers (12). Minimum 1, recommended 2. (default 1)
   -o string
         Output path (file or directory)
 
@@ -40,6 +45,7 @@ Examples:
   Compress   : dvpl_go -c -i ./input_dir -o ./output_dir
   Decompress : dvpl_go -d -i ./input_dir -o ./output_dir
   Ignore     : dvpl_go -c -i ./input_dir -ignore "*.exe,*.dll"
+  No compress: dvpl_go -c -i ./input_dir -ignore-compress "*.webp"
   Compression: dvpl_go -c -i ./input_dir -compress 2
 ```
 
@@ -53,7 +59,7 @@ Examples:
     - `0` - `none`
     - `1` - `lz4hc`
     - `2` - `lz4`
-- `-ignore` - A comma-separated list of file patterns to ignore.
+- `-ignore` & `-ignore-compress` - A comma-separated list of file patterns to ignore.
     #### Supported wildcard characters:
     - `*` — Any number of characters (except `/`).
     - `?` — One character.
@@ -73,12 +79,15 @@ Examples:
         outputPath: "./output_dir"
         compressFlag: false
         decompressFlag: false
+		forcedCompress: false
         ignorePatterns:
         - "*.exe"
         - "*.dll"
         - "*.pdb"
         - "*.pak"
         - "temp*"
+        ignoreCompress:
+        - "*.webp"
 
 - `-m` is the maximum number of parallel handlers (workers).
     - Default: 1 (single-threaded mode)
@@ -99,7 +108,7 @@ Total: 0 h 0 min 36.45 sec
 Weight: 1.15 GB (1,244,843,076 bytes)
 ```
 
-### This converter is for GoLang with multithreading
+### This converter is for GoLang with multithreading (2 workers)
 ```cmd
 Start:     16:4:43.85
 The end:   16:5:2.78

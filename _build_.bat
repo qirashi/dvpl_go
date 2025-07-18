@@ -26,7 +26,7 @@ if exist "%ResHack%" (
 where upx >nul 2>&1
 if %errorlevel% equ 0 (
     echo UPX найден в PATH, выполняю команды...
-    upx -9 "%cd%\out\dvpl_go.exe"
+    upx -7 "%cd%\out\dvpl_go.exe"
 ) else (
     echo UPX не найден в переменных среды PATH.
     echo Exe не сжат UPX.

@@ -502,7 +502,7 @@ func interactiveMode() {
 	}
 	defer keyboard.Close()
 
-	options := []string{"Compress", "Decompress"}
+	options := []string{"Compress", "Decompress", "Help", "Exit"}
 	selectedIndex := 0
 
 	for {
@@ -537,12 +537,21 @@ func interactiveMode() {
 			}
 		case keyboard.KeyEnter:
 			fmt.Println("\nYou selected:", options[selectedIndex])
-			if selectedIndex == 0 {
+			switch selectedIndex {
+			case 0: // Compress
 				compressInteractive()
-			} else {
+				return
+			case 1: // Decompress
 				decompressInteractive()
+				return
+			case 2: // Help
+				flag.Usage()
+				<-keysEvents
+				return
+			case 3: // Exit
+				fmt.Println("Exiting...")
+				return
 			}
-			return
 		}
 	}
 }
