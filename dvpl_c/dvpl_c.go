@@ -5,7 +5,7 @@
 package dvpl_c
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/lz4_win64/include -O3 -flto
+#cgo CFLAGS: -I${SRCDIR}/lz4_win64/include -O3
 #cgo LDFLAGS: -L${SRCDIR}/lz4_win64/static -lliblz4_static -Wl,-O1 -Wl,--as-needed
 
 #include <lz4.h>
@@ -26,20 +26,6 @@ const (
 	Marker     = "DVPL"
 )
 
-type Block struct {
-	SeekPosInDvpl     uint64
-	CompressedCRC32   uint32
-	CompressedSize    uint32
-	UncompressedCRC32 uint32
-	UncompressedSize  uint32
-}
-
-type LZ4StreamHeader struct {
-	NumOfParts uint32
-	Parts      []Block
-}
-
-// compressLZ4 сжимает данные с помощью LZ4 (C-версия)
 func compressLZ4(data []byte, level int) ([]byte, error) {
 	bound := int(C.LZ4_compressBound(C.int(len(data))))
 	if bound == 0 {
@@ -66,7 +52,6 @@ func compressLZ4(data []byte, level int) ([]byte, error) {
 	return compressed[:compressedSize], nil
 }
 
-// decompressLZ4 распаковывает данные с помощью LZ4 (C-версия)
 func decompressLZ4(compressed []byte, uncompressedSize int) ([]byte, error) {
 	uncompressed := make([]byte, uncompressedSize)
 	src := (*C.char)(unsafe.Pointer(&compressed[0]))
@@ -81,7 +66,6 @@ func decompressLZ4(compressed []byte, uncompressedSize int) ([]byte, error) {
 	return uncompressed[:decompressedSize], nil
 }
 
-// Pack сжимает данные и добавляет DVPL-футер
 func Pack(data []byte, compressType int, forcedCompress bool) ([]byte, uint32, error) {
 	if len(data) == 0 {
 		compressType = 0
@@ -157,7 +141,6 @@ func Pack(data []byte, compressType int, forcedCompress bool) ([]byte, uint32, e
 	return result, ptype, nil
 }
 
-// Unpack распаковывает DVPL-данные
 func Unpack(data []byte) ([]byte, uint32, error) {
 	if len(data) < FooterSize {
 		return nil, 0, fmt.Errorf("invalid DVPL data: size %d is less than footer size %d", len(data), FooterSize)

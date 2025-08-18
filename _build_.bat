@@ -6,6 +6,7 @@ echo off
 chcp 65001
 
 echo Начинаю сборку .exe
+set CGO_ENABLED=1
 go build -o ./out/dvpl_go.exe -ldflags="-s -w" -trimpath -buildmode=exe -tags=release -asmflags="-trimpath" -mod=readonly dvpl_go.go
 if %ERRORLEVEL% neq 0 (
     echo Ошибка: Сборка завершилась с ошибкой. Код ошибки: %ERRORLEVEL%
