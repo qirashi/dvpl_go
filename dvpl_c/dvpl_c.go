@@ -84,7 +84,6 @@ func Pack(data []byte, compressType int, forcedCompress bool) ([]byte, uint32, e
 			return result, ptype, fmt.Errorf("[error] Failed to compress data: %v", err)
 		}
 
-		// Если сжатые данные больше или равны исходным, не сжимаем
 		if !forcedCompress && len(compressed) >= len(data) {
 			result = data
 			ptype = 0 // Без сжатия
@@ -98,7 +97,6 @@ func Pack(data []byte, compressType int, forcedCompress bool) ([]byte, uint32, e
 			return result, ptype, fmt.Errorf("[error] Failed to compress data: %v", err)
 		}
 
-		// Если сжатые данные больше или равны исходным, не сжимаем
 		if !forcedCompress && len(compressed) >= len(data) {
 			result = data
 			ptype = 0 // Без сжатия
@@ -110,10 +108,8 @@ func Pack(data []byte, compressType int, forcedCompress bool) ([]byte, uint32, e
 		return result, ptype, fmt.Errorf("[error] Unsupported compression type: %d", compressType)
 	}
 
-	// Вычисляем CRC32 для результата
 	crc := crc32.ChecksumIEEE(result)
 
-	// Создаем футер
 	unpacked := uint32(len(data))
 	packed := uint32(len(result))
 
