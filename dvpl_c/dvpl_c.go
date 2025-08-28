@@ -5,7 +5,7 @@
 package dvpl_c
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/lz4_win64/include -O3
+#cgo CFLAGS: -I${SRCDIR}/lz4_win64/include -O3 -DNDEBUG
 #cgo LDFLAGS: -L${SRCDIR}/lz4_win64/static -lliblz4_static -Wl,-O1 -Wl,--as-needed
 
 #include <lz4.h>

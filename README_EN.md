@@ -4,6 +4,7 @@
  > In this converter, the [lz4](https://github.com/lz4/lz4) library was used to speed up compression and improve its quality.
 
 ## How to use the converter?
+* [Гайд на Русском](.readme/how_to_use.md)
 * [Guide in English](.readme/how_to_use_en.md)
 
 ## Description
@@ -13,7 +14,7 @@
 - `0` - `none` - There is no compression at all.
 - `1` - `LZ4HC` - Stronger and slower than LZ4.
 - `2` - `LZ4` - Less strong and faster than LZ4HC.
-- `3` - `RFC1951` - Compression is not used in the game. (His reading is broken. I only added unpacking.)
+- `3` - `RFC1951` - Compression is not used in the game. (The format is cut out.)
 
 ### Console Output
 
