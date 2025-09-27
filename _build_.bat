@@ -5,14 +5,14 @@
 echo off
 chcp 65001
 
-echo Начинаю сборку .exe
+echo Начинаю сборку.
 set CGO_ENABLED=1
 go build -o ./out/dvpl.exe -buildvcs=false -ldflags="-s -w -buildid=" -trimpath -buildmode=exe -tags=release -asmflags="-trimpath" -mod=readonly dvpl_go.go
 if %ERRORLEVEL% neq 0 (
     echo Ошибка: Сборка завершилась с ошибкой. Код ошибки: %ERRORLEVEL%
     exit /b %ERRORLEVEL%
 )
-echo .exe Успешно собран.
+echo Сборка выполнена успешно.
 
 
 set ResHack="R:\Program_Files\resource_hacker\ResourceHacker.exe"
