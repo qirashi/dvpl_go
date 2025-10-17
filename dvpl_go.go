@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
-	"runtime"
 
 	"github.com/eiannone/keyboard"
 	"gopkg.in/yaml.v3"
@@ -29,6 +29,7 @@ type Config struct {
 	KeepOriginal   bool     `yaml:"keepOriginal"`
 	CompressType   int      `yaml:"compress"`
 	IgnorePatterns []string `yaml:"ignorePatterns"`
+	FilterPatterns []string `yaml:"filterPatterns"`
 	IgnoreCompress []string `yaml:"ignoreCompress"`
 	ForcedCompress bool     `yaml:"forcedCompress"`
 	MaxWorkers     int      `yaml:"maxWorkers"`
@@ -44,21 +45,23 @@ func main() {
 	keepOriginal   := flag.Bool("keep-original", false, "Keep original files")
 	compressType   := flag.Int("compress", 1, "Compression type: 0 (none), 1 (lz4hc), 2 (lz4) |")
 	ignorePatterns := flag.String("ignore", "", "Comma-separated list of file patterns to ignore")
+	filterPatterns := flag.String("filter", "", "Comma-separated list of file patterns to include (e.g. \"*.sc2,*.scg\")")
 	ignoreCompress := flag.String("ignore-compress", "", "Comma-separated list of file patterns to force no compression (type 0)")
 	forcedCompress := flag.Bool("forced-compress", false, "Forced compression, even if the result is larger than the original")
 	maxWorkers     := flag.Int("m", 1, fmt.Sprintf("Maximum number of parallel workers (%d). Minimum 1, recommended 2.", maxCPU))
 
 	flag.Usage = func() {
-		fmt.Println(`Usage: dvpl_go [options]
+		fmt.Println(`Usage: dvpl [options]
 Options:`)
 		flag.PrintDefaults()
 		fmt.Println(`
 Examples:
-  Compress   : dvpl_go -c -i ./input_dir -o ./output_dir
-  Decompress : dvpl_go -d -i ./input_dir -o ./output_dir
-  Ignore     : dvpl_go -c -i ./input_dir -ignore "*.exe,*.dll"
-  No compress: dvpl_go -c -i ./input_dir -ignore-compress "*.webp"
-  Compression: dvpl_go -c -i ./input_dir -compress 2`)
+  Compress   : dvpl -c -i ./input_dir -o ./output_dir
+  Decompress : dvpl -d -i ./input_dir -o ./output_dir
+  Ignore     : dvpl -c -i ./input_dir -ignore "*.exe,*.dll"
+  Filter     : dvpl -d -i ./input_dir -o ./output_dir -filter "*.sc2,*.scg"
+  No compress: dvpl -c -i ./input_dir -ignore-compress "*.webp"
+  Compression: dvpl -c -i ./input_dir -compress 2`)
 	}
 
 	config := readConfig()
@@ -89,6 +92,9 @@ Examples:
 		}
 		if len(config.IgnorePatterns) > 0 {
 			*ignorePatterns = strings.Join(config.IgnorePatterns, ",")
+		}
+		if len(config.FilterPatterns) > 0 {
+			*filterPatterns = strings.Join(config.FilterPatterns, ",")
 		}
 		if len(config.IgnoreCompress) > 0 {
 			*ignoreCompress = strings.Join(config.IgnoreCompress, ",")
@@ -127,6 +133,14 @@ Examples:
 		ignoreCompressList = strings.Split(*ignoreCompress, ",")
 	}
 
+	var filterList []string
+	if *filterPatterns != "" {
+		filterList = strings.Split(*filterPatterns, ",")
+		for i := range filterList {
+			filterList[i] = strings.TrimSpace(filterList[i])
+		}
+	}
+
 	if *maxWorkers < 1 {
 		*maxWorkers = 1
 	} else if *maxWorkers > maxCPU {
@@ -134,28 +148,28 @@ Examples:
 		*maxWorkers = maxCPU
 	}
 
-	debugPrintFlags(config, *compressFlag, *decompressFlag, *inputPath, *outputPath, *keepOriginal, *compressType, ignoreList, ignoreCompressList, *maxWorkers)
+	debugPrintFlags(config, *compressFlag, *inputPath, *outputPath, *keepOriginal, *compressType, ignoreList, ignoreCompressList, filterList, *maxWorkers)
 
 	if *compressFlag {
-		processFiles(*inputPath, *outputPath, Pack, ".dvpl", *keepOriginal, *compressFlag, *compressType, ignoreList, ignoreCompressList, *maxWorkers, *forcedCompress)
+		processFiles(*inputPath, *outputPath, Pack, ".dvpl", *keepOriginal, *compressFlag, *compressType, ignoreList, ignoreCompressList, filterList, *maxWorkers, *forcedCompress)
 	} else if *decompressFlag {
-		processFiles(*inputPath, *outputPath, Unpack, "", *keepOriginal, *compressFlag, *compressType, ignoreList, ignoreCompressList, *maxWorkers, *forcedCompress)
+		processFiles(*inputPath, *outputPath, Unpack, "", *keepOriginal, *compressFlag, *compressType, ignoreList, ignoreCompressList, filterList, *maxWorkers, *forcedCompress)
 	}
 }
 
 func getCompressionTypeString(compressionType uint32) string {
-    switch compressionType {
-    case 0:
-        return "none"
-    case 1:
-        return "lz4hc"
-    case 2:
-        return "lz4"
-    case 3:
-        return "rfc1951"
-    default:
-        return fmt.Sprintf("unknown(%d)", compressionType)
-    }
+	switch compressionType {
+	case 0:
+		return "none"
+	case 1:
+		return "lz4hc"
+	case 2:
+		return "lz4"
+	case 3:
+		return "rfc1951"
+	default:
+		return fmt.Sprintf("unknown(%d)", compressionType)
+	}
 }
 
 func Pack(inputPath, outputPath string, compressType int, forcedCompress bool) error {
@@ -209,9 +223,7 @@ func Unpack(inputPath, outputPath string, _ int, _ bool) error {
 
 	fmt.Printf("Unpack [%s]: %s\n", getCompressionTypeString(compressionType), inputPath)
 
-	if strings.HasSuffix(outputPath, ".dvpl") {
-		outputPath = strings.TrimSuffix(outputPath, ".dvpl")
-	}
+	outputPath = strings.TrimSuffix(outputPath, ".dvpl")
 
 	// Блокируем только на время записи файла
 	fileMutex.Lock()
@@ -228,8 +240,8 @@ func Unpack(inputPath, outputPath string, _ int, _ bool) error {
 	return nil
 }
 
-func debugPrintFlags(c *Config, compressFlag, decompressFlag bool, inputPath, outputPath string, 
-	keepOriginal bool, compressType int, ignorePatterns, ignoreCompressPatterns []string, maxWorkers int) {
+func debugPrintFlags(c *Config, compressFlag bool, inputPath, outputPath string, 
+	keepOriginal bool, compressType int, ignorePatterns, ignoreCompressPatterns, filterPatterns []string, maxWorkers int) {
 
 	var flags []string
 
@@ -252,6 +264,9 @@ func debugPrintFlags(c *Config, compressFlag, decompressFlag bool, inputPath, ou
 	}
 	if len(ignoreCompressPatterns) > 0 {
 		flags = append(flags, fmt.Sprintf("-ignore-compress \"%s\"", strings.Join(ignoreCompressPatterns, ",")))
+	}
+	if len(filterPatterns) > 0 {
+		flags = append(flags, fmt.Sprintf("-filter \"%s\"", strings.Join(filterPatterns, ",")))
 	}
 	flags = append(flags, fmt.Sprintf("-m %d", maxWorkers))
 
@@ -292,7 +307,7 @@ func readConfig() *Config {
 	return &config
 }
 
-func shouldProcessFile(path string, info os.FileInfo, exeFileName string, compressFlag bool, ignorePatterns, ignoreCompressPatterns []string) bool {
+func shouldProcessFile(path string, info os.FileInfo, exeFileName string, compressFlag bool, ignorePatterns, filterPatterns []string) bool {
 	if compressFlag && (info.Name() == ".dvpl_go.yml" || info.Name() == exeFileName) {
 		fmt.Printf("Excluding file: %s\n", path)
 		return false
@@ -315,6 +330,24 @@ func shouldProcessFile(path string, info os.FileInfo, exeFileName string, compre
 		}
 	}
 
+	if len(filterPatterns) > 0 {
+		nameToMatch := info.Name()
+		if !compressFlag {
+			nameToMatch = strings.TrimSuffix(nameToMatch, ".dvpl")
+		}
+		matchedAny := false
+		for _, pattern := range filterPatterns {
+			if matched, _ := filepath.Match(strings.TrimSpace(pattern), nameToMatch); matched {
+				matchedAny = true
+				break
+			}
+		}
+		if !matchedAny {
+			fmt.Printf("Filter skip: %s\n", path)
+			return false
+		}
+	}
+
 	return true
 }
 
@@ -326,6 +359,7 @@ func processFiles(inputPath, outputPath string,
 	compressType int, 
 	ignorePatterns []string,
 	ignoreCompressPatterns []string,
+	filterPatterns []string,
 	maxWorkers int, 
 	forcedCompress bool) {
 
@@ -347,7 +381,7 @@ func processFiles(inputPath, outputPath string,
 				}
 
 				if !info.IsDir() {
-					if !shouldProcessFile(path, info, exeFileName, compressFlag, ignorePatterns, ignoreCompressPatterns) {
+					if !shouldProcessFile(path, info, exeFileName, compressFlag, ignorePatterns, filterPatterns) {
 						return nil
 					}
 
@@ -357,7 +391,6 @@ func processFiles(inputPath, outputPath string,
 						outPath += newExt
 					}
 
-					// Проверяем, нужно ли принудительно отключить сжатие
 					actualCompressType := compressType
 					for _, pattern := range ignoreCompressPatterns {
 						if matched, _ := filepath.Match(pattern, info.Name()); matched {
@@ -398,7 +431,7 @@ func processFiles(inputPath, outputPath string,
 				}
 
 				if !info.IsDir() {
-					if !shouldProcessFile(path, info, exeFileName, compressFlag, ignorePatterns, ignoreCompressPatterns) {
+					if !shouldProcessFile(path, info, exeFileName, compressFlag, ignorePatterns, filterPatterns) {
 						return nil
 					}
 
@@ -408,7 +441,6 @@ func processFiles(inputPath, outputPath string,
 						outPath += newExt
 					}
 
-					// Проверяем, нужно ли принудительно отключить сжатие
 					ignoreCompress := false
 					for _, pattern := range ignoreCompressPatterns {
 						if matched, _ := filepath.Match(pattern, info.Name()); matched {
@@ -446,7 +478,25 @@ func processFiles(inputPath, outputPath string,
 			outPath += newExt
 		}
 
-		// Проверяем, нужно ли принудительно отключить сжатие для одиночного файла
+		if len(filterPatterns) > 0 {
+			baseName := filepath.Base(inputPath)
+			nameToMatch := baseName
+			if !compressFlag {
+				nameToMatch = strings.TrimSuffix(baseName, ".dvpl")
+			}
+			matchedAny := false
+			for _, pattern := range filterPatterns {
+				if matched, _ := filepath.Match(strings.TrimSpace(pattern), nameToMatch); matched {
+					matchedAny = true
+					break
+				}
+			}
+			if !matchedAny {
+				fmt.Printf("Filter skip: %s\n", inputPath)
+				return
+			}
+		}
+
 		actualCompressType := compressType
 		info, _ := os.Stat(inputPath)
 		for _, pattern := range ignoreCompressPatterns {
@@ -599,7 +649,7 @@ func compressInteractive() {
 		case keyboard.KeyEnter:
 			selectedCompressionType := compressionTypes[selectedIndex]
 			fmt.Println("\nYou selected compression type:", options[selectedIndex])
-			processFiles(".", ".", Pack, ".dvpl", false, true, selectedCompressionType, nil, nil, 1, false)
+			processFiles(".", ".", Pack, ".dvpl", false, true, selectedCompressionType, nil, nil, nil, 1, false)
 			return
 		}
 	}
@@ -607,5 +657,5 @@ func compressInteractive() {
 
 func decompressInteractive() {
 	fmt.Println("Decompressing files in current directory...")
-	processFiles(".", ".", Unpack, "", false, false, 0, nil, nil, 1, false)
+	processFiles(".", ".", Unpack, "", false, false, 0, nil, nil, nil, 1, false)
 }

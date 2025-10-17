@@ -1,4 +1,4 @@
-# Конфигурация для dvpl_go
+# Конфигурация для dvpl.exe
 
 # inputPath: "./input"   # (-i)
 # outputPath: "./output" # (-o)
@@ -11,5 +11,8 @@ maxWorkers: 2          # (-m)
 ignorePatterns:        # (-ignore)
   - "*.exe"
   - "*.dll"
+# filterPatterns:        # (-filter)
+  # - "*.sc2"
+  # - "*.scg"
 # ignoreCompress:        # (-ignore-compress)
   # - "*.webp"
