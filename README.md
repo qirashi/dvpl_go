@@ -19,14 +19,16 @@
 ### Вывод в консоль
 
 ```cmd
-R:\Github\dvpl_go>dvpl_go.exe -h
+R:\Github\dvpl_go>dvpl.exe -h
 [debug] Config file found: .dvpl_go.yml
-Usage: dvpl_go [options]
+Usage: dvpl [options]
 Options:
   -c    Compress .dvpl files
   -compress int
         Compression type: 0 (none), 1 (lz4hc), 2 (lz4) | (default 1)
   -d    Decompress .dvpl files
+  -filter string
+        Comma-separated list of file patterns to include (e.g. "*.sc2,*.scg")
   -forced-compress
         Forced compression, even if the result is larger than the original
   -i string
@@ -43,11 +45,12 @@ Options:
         Output path (file or directory)
 
 Examples:
-  Compress   : dvpl_go -c -i ./input_dir -o ./output_dir
-  Decompress : dvpl_go -d -i ./input_dir -o ./output_dir
-  Ignore     : dvpl_go -c -i ./input_dir -ignore "*.exe,*.dll"
-  No compress: dvpl_go -c -i ./input_dir -ignore-compress "*.webp"
-  Compression: dvpl_go -c -i ./input_dir -compress 2
+  Compress   : dvpl -c -i ./input_dir -o ./output_dir
+  Decompress : dvpl -d -i ./input_dir -o ./output_dir
+  Ignore     : dvpl -c -i ./input_dir -ignore "*.exe,*.dll"
+  Filter     : dvpl -d -i ./input_dir -o ./output_dir -filter "*.sc2,*.scg"
+  No compress: dvpl -c -i ./input_dir -ignore-compress "*.webp"
+  Compression: dvpl -c -i ./input_dir -compress 2
 ```
 
 ### Описание команд
@@ -60,7 +63,11 @@ Examples:
     - `0` - `none`
     - `1` - `lz4hc`
     - `2` - `lz4`
-- `-ignore` и `-ignore-compress` - Список шаблонов файлов, которые следует игнорировать, разделенный запятыми.
+- `-ignore` - Список шаблонов файлов, которые стоит игнорировать. (Файлы и расширения не будут обработаны)
+- `-ignore-compress` - Список шаблонов файлов, которые принудительно будут сжаты в 0 тип. (Например `*.webp`)
+- `-filter` - Список файлов шаблонов, которые будут обработаны. (Только файлы и расширения, которые будут обработаны, обратный от `-ignore`)
+    - Например вам нужно распаковыать в отдельную папку только `*.webp` и `*.txt`.
+    - Это будет выглядеть так: `dvpl -d -i ./in -o ./out -filter "*.webp,*.txt" -keep-original -m 4`
     #### Поддерживаются следующие символы подстановки:
     - `*` — любое количество символов (кроме `/`).
     - `?` — один символ.
@@ -80,13 +87,17 @@ Examples:
         outputPath: "./output_dir"
         compressFlag: false
         decompressFlag: false
-		forcedCompress: false
+        forcedCompress: false
+        maxWorkers: 2
         ignorePatterns:
         - "*.exe"
         - "*.dll"
         - "*.pdb"
         - "*.pak"
         - "temp*"
+        filterPatterns:
+        - "*.sc2"
+        - "*.scg"
         ignoreCompress:
         - "*.webp"
 

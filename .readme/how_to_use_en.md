@@ -1,7 +1,7 @@
 # dvpl_go [BACK](./../README_EN.md)
 
 > [!NOTE]
-> Instructions for using and installing the **dvpl_go** utility.
+> Instructions for using and installing the **dvpl** utility.
 
 ---
 
@@ -19,14 +19,14 @@ The **dvpl_go** utility allows you to work with files in the DVPL format. It can
 ## Installation
 
 ### Full Installation
-1. Run the installer named `dvpl_go_installer.exe`.
+1. Run the installer from `Releases`.
 2. Follow the installer's instructions.
 3. Choose the option to integrate the utility into the context menu (recommended for ease of use).
 
 Once the installation is complete, you can use the utility via the context menu, as shown in the screenshot.
 
 ### Manual Installation
-1. Download the `dvpl_go.zip` archive from the **Releases** section.
+1. Download the archive for your architecture from the **Releases** section.
 2. Extract the contents of the archive into any convenient folder (e.g., the desktop).
 3. Use the utility directly from this folder.
 
@@ -43,9 +43,9 @@ Once the installation is complete, you can use the utility via the context menu,
 _Example of utility integration in the context menu_
 
 ### Via Manual Launch
-1. Place the `dvpl_go.exe` file in the target folder with the files you want to process.
+1. Place the `dvpl.exe` file in the target folder with the files you want to process.
 2. Launch the utility in one of the following ways:
-   - For **compression**: Drag and drop a file or folder onto the `dvpl_go.exe` executable.
+   - For **compression**: Drag and drop a file or folder onto the `dvpl.exe` executable.
    - For **decompression**: Run the utility from the command line with the appropriate parameters (see the documentation inside the archive for details).
 
 ![Example of direct program launch](screenshot_2.png)  

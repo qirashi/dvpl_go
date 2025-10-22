@@ -19,14 +19,16 @@
 ### Console Output
 
 ```cmd
-R:\Github\dvpl_go>dvpl_go.exe -h
+R:\Github\dvpl_go>dvpl.exe -h
 [debug] Config file found: .dvpl_go.yml
-Usage: dvpl_go [options]
+Usage: dvpl [options]
 Options:
   -c    Compress .dvpl files
   -compress int
         Compression type: 0 (none), 1 (lz4hc), 2 (lz4) | (default 1)
   -d    Decompress .dvpl files
+  -filter string
+        Comma-separated list of file patterns to include (e.g. "*.sc2,*.scg")
   -forced-compress
         Forced compression, even if the result is larger than the original
   -i string
@@ -43,11 +45,12 @@ Options:
         Output path (file or directory)
 
 Examples:
-  Compress   : dvpl_go -c -i ./input_dir -o ./output_dir
-  Decompress : dvpl_go -d -i ./input_dir -o ./output_dir
-  Ignore     : dvpl_go -c -i ./input_dir -ignore "*.exe,*.dll"
-  No compress: dvpl_go -c -i ./input_dir -ignore-compress "*.webp"
-  Compression: dvpl_go -c -i ./input_dir -compress 2
+  Compress   : dvpl -c -i ./input_dir -o ./output_dir
+  Decompress : dvpl -d -i ./input_dir -o ./output_dir
+  Ignore     : dvpl -c -i ./input_dir -ignore "*.exe,*.dll"
+  Filter     : dvpl -d -i ./input_dir -o ./output_dir -filter "*.sc2,*.scg"
+  No compress: dvpl -c -i ./input_dir -ignore-compress "*.webp"
+  Compression: dvpl -c -i ./input_dir -compress 2
 ```
 
 ### Command Descriptions
@@ -60,7 +63,11 @@ Examples:
     - `0` - `none`
     - `1` - `lz4hc`
     - `2` - `lz4`
-- `-ignore` & `-ignore-compress` - A comma-separated list of file patterns to ignore.
+- `-ignore` is a list of file templates that should be ignored. (Files and extensions will not be processed)
+- `-ignore-compress` - A list of file templates that will be forcibly compressed to type 0. (For example, `*.webp')
+- `-filter` - A list of template files to be processed. (Only files and extensions that will be processed are the reverse of `-ignore`)
+    - For example, you need to unpack only `*.webp` and `*.txt` into a separate folder.
+    - It will look like this: `dvpl -d -i ./in -o ./out -filter "*.webp,*.txt" -keep-original -m 4`
     #### Supported wildcard characters:
     - `*` — Any number of characters (except `/`).
     - `?` — One character.
@@ -80,13 +87,17 @@ Examples:
         outputPath: "./output_dir"
         compressFlag: false
         decompressFlag: false
-		forcedCompress: false
+        forcedCompress: false
+        maxWorkers: 2
         ignorePatterns:
         - "*.exe"
         - "*.dll"
         - "*.pdb"
         - "*.pak"
         - "temp*"
+        filterPatterns:
+        - "*.sc2"
+        - "*.scg"
         ignoreCompress:
         - "*.webp"
 
