@@ -19,7 +19,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var fileMutex sync.Mutex
+var diskMutexes sync.Map
 
 type Config struct {
 	CompressFlag   bool     `yaml:"compressFlag"`
@@ -172,12 +172,20 @@ func getCompressionTypeString(compressionType uint32) string {
 	}
 }
 
+func getDiskMutex(path string) *sync.Mutex {
+	volume := filepath.VolumeName(path)
+	mutex, _ := diskMutexes.LoadOrStore(volume, &sync.Mutex{})
+	return mutex.(*sync.Mutex)
+}
+
 func Pack(inputPath, outputPath string, compressType int, forcedCompress bool) error {
-	
-	fileMutex.Lock()
+	inMu := getDiskMutex(inputPath)
+
+	// Блокируем только чтение с одного диска
+	inMu.Lock()
 	data, err := os.ReadFile(inputPath)
-	fileMutex.Unlock()
-	
+	inMu.Unlock()
+
 	if err != nil {
 		return fmt.Errorf("[error] Failed to read input file: %v", err)
 	}
@@ -190,9 +198,10 @@ func Pack(inputPath, outputPath string, compressType int, forcedCompress bool) e
 
 	fmt.Printf("Pack [%s]: %s\n", getCompressionTypeString(compressionType), inputPath)
 
-	// Блокируем только на время записи файла
-	fileMutex.Lock()
-	defer fileMutex.Unlock()
+	// Блокируем только запись на диск назначения
+	outMu := getDiskMutex(outputPath)
+	outMu.Lock()
+	defer outMu.Unlock()
 
 	if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
 		return fmt.Errorf("[error] Failed to create output directory: %v", err)
@@ -206,10 +215,12 @@ func Pack(inputPath, outputPath string, compressType int, forcedCompress bool) e
 }
 
 func Unpack(inputPath, outputPath string, _ int, _ bool) error {
-	
-	fileMutex.Lock()
+	inMu := getDiskMutex(inputPath)
+
+	// Блокируем только чтение с одного диска
+	inMu.Lock()
 	dvplData, err := os.ReadFile(inputPath)
-	fileMutex.Unlock()
+	inMu.Unlock()
 
 	if err != nil {
 		return fmt.Errorf("[error] Failed to read input file: %v", err)
@@ -225,9 +236,10 @@ func Unpack(inputPath, outputPath string, _ int, _ bool) error {
 
 	outputPath = strings.TrimSuffix(outputPath, ".dvpl")
 
-	// Блокируем только на время записи файла
-	fileMutex.Lock()
-	defer fileMutex.Unlock()
+	// Блокируем только запись на диск назначения
+	outMu := getDiskMutex(outputPath)
+	outMu.Lock()
+	defer outMu.Unlock()
 
 	if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
 		return fmt.Errorf("[error] Failed to create output directory: %v", err)
@@ -535,10 +547,10 @@ func worker(tasks <-chan task, errors chan<- error, wg *sync.WaitGroup) {
 		}
 
 		if err := task.processor(task.path, task.outPath, actualCompressType, task.forcedCompress); err != nil {
-			errors <- fmt.Errorf("Processing file %s: %v", task.path, err)
+			errors <- fmt.Errorf("processing file %s: %v", task.path, err)
 		} else if !task.keepOriginal {
 			if err := os.Remove(task.path); err != nil {
-				errors <- fmt.Errorf("Removing original file %s: %v", task.path, err)
+				errors <- fmt.Errorf("removing original file %s: %v", task.path, err)
 			}
 		}
 	}
