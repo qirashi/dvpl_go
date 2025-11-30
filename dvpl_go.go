@@ -6,6 +6,7 @@ package main
 
 import (
 	dvpl "dvpl_go/dvpl_c"
+	"io/fs"
 
 	"flag"
 	"fmt"
@@ -18,8 +19,6 @@ import (
 	"github.com/eiannone/keyboard"
 	"gopkg.in/yaml.v3"
 )
-
-var diskMutexes sync.Map
 
 type Config struct {
 	CompressFlag   bool     `yaml:"compressFlag"`
@@ -172,36 +171,20 @@ func getCompressionTypeString(compressionType uint32) string {
 	}
 }
 
-func getDiskMutex(path string) *sync.Mutex {
-	volume := filepath.VolumeName(path)
-	mutex, _ := diskMutexes.LoadOrStore(volume, &sync.Mutex{})
-	return mutex.(*sync.Mutex)
-}
-
 func Pack(inputPath, outputPath string, compressType int, forcedCompress bool) error {
-	inMu := getDiskMutex(inputPath)
 
-	// Блокируем только чтение с одного диска
-	inMu.Lock()
 	data, err := os.ReadFile(inputPath)
-	inMu.Unlock()
 
 	if err != nil {
 		return fmt.Errorf("[error] Failed to read input file: %v", err)
 	}
 
-	// Обработка данных без блокировки (может выполняться параллельно)
 	dvplData, compressionType, err := dvpl.Pack(data, compressType, forcedCompress)
 	if err != nil {
 		return fmt.Errorf("[error] Failed to pack data: %v", err)
 	}
 
 	fmt.Printf("Pack [%s]: %s\n", getCompressionTypeString(compressionType), inputPath)
-
-	// Блокируем только запись на диск назначения
-	outMu := getDiskMutex(outputPath)
-	outMu.Lock()
-	defer outMu.Unlock()
 
 	if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
 		return fmt.Errorf("[error] Failed to create output directory: %v", err)
@@ -215,18 +198,13 @@ func Pack(inputPath, outputPath string, compressType int, forcedCompress bool) e
 }
 
 func Unpack(inputPath, outputPath string, _ int, _ bool) error {
-	inMu := getDiskMutex(inputPath)
 
-	// Блокируем только чтение с одного диска
-	inMu.Lock()
 	dvplData, err := os.ReadFile(inputPath)
-	inMu.Unlock()
 
 	if err != nil {
 		return fmt.Errorf("[error] Failed to read input file: %v", err)
 	}
 
-	// Обработка данных без блокировки (может выполняться параллельно)
 	data, compressionType, err := dvpl.Unpack(dvplData)
 	if err != nil {
 		return fmt.Errorf("[error] Failed to unpack data: %v", err)
@@ -235,11 +213,6 @@ func Unpack(inputPath, outputPath string, _ int, _ bool) error {
 	fmt.Printf("Unpack [%s]: %s\n", getCompressionTypeString(compressionType), inputPath)
 
 	outputPath = strings.TrimSuffix(outputPath, ".dvpl")
-
-	// Блокируем только запись на диск назначения
-	outMu := getDiskMutex(outputPath)
-	outMu.Lock()
-	defer outMu.Unlock()
 
 	if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
 		return fmt.Errorf("[error] Failed to create output directory: %v", err)
@@ -363,16 +336,16 @@ func shouldProcessFile(path string, info os.FileInfo, exeFileName string, compre
 	return true
 }
 
-func processFiles(inputPath, outputPath string, 
+func processFiles(inputPath, outputPath string,
 	processor func(string, string, int, bool) error,
-	newExt string, 
-	keepOriginal bool, 
-	compressFlag bool, 
-	compressType int, 
+	newExt string,
+	keepOriginal bool,
+	compressFlag bool,
+	compressType int,
 	ignorePatterns []string,
 	ignoreCompressPatterns []string,
 	filterPatterns []string,
-	maxWorkers int, 
+	maxWorkers int,
 	forcedCompress bool) {
 
 	info, err := os.Stat(inputPath)
@@ -386,13 +359,14 @@ func processFiles(inputPath, outputPath string,
 	if info.IsDir() {
 		if maxWorkers <= 1 {
 			// Однопоточный режим
-			filepath.Walk(inputPath, func(path string, info os.FileInfo, err error) error {
+			filepath.WalkDir(inputPath, func(path string, d fs.DirEntry, err error) error {
 				if err != nil {
 					fmt.Printf("[error] Error accessing path %s: %v\n", path, err)
 					return nil
 				}
 
-				if !info.IsDir() {
+				if !d.IsDir() {
+					info, _ := d.Info() // получаем os.FileInfo только при необходимости
 					if !shouldProcessFile(path, info, exeFileName, compressFlag, ignorePatterns, filterPatterns) {
 						return nil
 					}
@@ -436,13 +410,14 @@ func processFiles(inputPath, outputPath string,
 				}
 			}()
 
-			filepath.Walk(inputPath, func(path string, info os.FileInfo, err error) error {
+			filepath.WalkDir(inputPath, func(path string, d fs.DirEntry, err error) error {
 				if err != nil {
 					fmt.Printf("[error] Error accessing path %s: %v\n", path, err)
 					return nil
 				}
 
-				if !info.IsDir() {
+				if !d.IsDir() {
+					info, _ := d.Info()
 					if !shouldProcessFile(path, info, exeFileName, compressFlag, ignorePatterns, filterPatterns) {
 						return nil
 					}

@@ -17,8 +17,11 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"hash/crc32"
 	"unsafe"
+
+	"github.com/klauspost/crc32" // Замена "hash/crc32"
+	// "compress/zlib"
+	// "io"
 )
 
 const (
@@ -52,6 +55,7 @@ func compressLZ4(data []byte, level int) ([]byte, error) {
 	return compressed[:compressedSize], nil
 }
 
+// CGO
 func decompressLZ4(compressed []byte, uncompressedSize int) ([]byte, error) {
 	uncompressed := make([]byte, uncompressedSize)
 	src := (*C.char)(unsafe.Pointer(&compressed[0]))
@@ -65,7 +69,6 @@ func decompressLZ4(compressed []byte, uncompressedSize int) ([]byte, error) {
 
 	return uncompressed[:decompressedSize], nil
 }
-
 func Pack(data []byte, compressType int, forcedCompress bool) ([]byte, uint32, error) {
 	if len(data) == 0 {
 		compressType = 0
@@ -104,6 +107,23 @@ func Pack(data []byte, compressType int, forcedCompress bool) ([]byte, uint32, e
 			result = compressed
 			ptype = 2 // LZ4
 		}
+	// case 3: // rfc1951 (zlib)
+		// var compressed bytes.Buffer
+		// writer := zlib.NewWriter(&compressed)
+		// if _, err := writer.Write(data); err != nil {
+			// return result, ptype, fmt.Errorf("[error] Failed to compress data with zlib: %v", err)
+		// }
+		// if err := writer.Close(); err != nil {
+			// return result, ptype, fmt.Errorf("[error] Failed to close zlib writer: %v", err)
+		// }
+
+		// if !forcedCompress && compressed.Len() >= len(data) {
+			// result = data
+			// ptype = 0 // Без сжатия
+		// } else {
+			// result = compressed.Bytes()
+			// ptype = 3 // rfc1951
+		// }
 	default:
 		return result, ptype, fmt.Errorf("[error] Unsupported compression type: %d", compressType)
 	}
@@ -178,6 +198,17 @@ func Unpack(data []byte) ([]byte, uint32, error) {
 		if err != nil {
 			return nil, footer.PType, fmt.Errorf("[error] Failed to decompress LZ4 data: %v", err)
 		}
+	// case 3: // rfc1951
+		// var reader io.ReadCloser
+		// reader, err = zlib.NewReader(bytes.NewReader(data))
+		// if err != nil {
+			// return nil, footer.PType, fmt.Errorf("[error] Failed to create zlib reader: %v", err)
+		// }
+		// defer reader.Close()
+		// result, err = io.ReadAll(reader)
+		// if err != nil {
+			// return nil, footer.PType, fmt.Errorf("[error] Failed to decompress zlib data: %v", err)
+		// }
 	default:
 		return nil, footer.PType, fmt.Errorf("[error] Unsupported compression type: %d", footer.PType)
 	}
