@@ -1,5 +1,3 @@
-# Конфигурация для dvpl.exe
-
 # inputPath: "./input"   # (-i)
 # outputPath: "./output" # (-o)
 # compressFlag: false    # (-c)
