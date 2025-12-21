@@ -3,6 +3,14 @@
  > [!NOTE]
  > В данном конвертере для ускорения сжатия и улучшения его качества была использована библиотека [lz4](https://github.com/lz4/lz4).
 
+<div align="center">
+	
+[![GitHub license](https://img.shields.io/github/license/qirashi/dvpl_go?logo=apache&label=License&style=flat  )](https://github.com/qirashi/dvpl_go/blob/main/LICENSE  )
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/qirashi/dvpl_go/total?logo=github&label=Downloads&style=flat  )
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/qirashi/dvpl_go?style=flat&label=Code%20Size  )
+
+</div>
+
 ## Как пользоваться конвертером?
 * [Гайд на Русском](.readme/how_to_use.md)
 * [Guide in English](.readme/how_to_use_en.md)
