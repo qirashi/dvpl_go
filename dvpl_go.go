@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2025 Qirashi
+// Copyright (c) 2025-2026 Qirashi
 // Project: dvpl_go
 
 package main
@@ -36,22 +36,25 @@ type Config struct {
 
 func main() {
 	maxCPU := runtime.NumCPU()
-	
-	compressFlag   := flag.Bool("c", false, "Compress .dvpl files")
+
+	compressFlag := flag.Bool("c", false, "Compress .dvpl files")
 	decompressFlag := flag.Bool("d", false, "Decompress .dvpl files")
-	inputPath      := flag.String("i", "", "Input path (file or directory)")
-	outputPath     := flag.String("o", "", "Output path (file or directory)")
-	keepOriginal   := flag.Bool("keep-original", false, "Keep original files")
-	compressType   := flag.Int("compress", 1, "Compression type: 0 (none), 1 (lz4hc), 2 (lz4) |")
+	inputPath := flag.String("i", "", "Input path (file or directory)")
+	outputPath := flag.String("o", "", "Output path (file or directory)")
+	keepOriginal := flag.Bool("keep-original", false, "Keep original files")
+	compressType := flag.Int("compress", 1, "Compression type: 0 (none), 1 (lz4hc), 2 (lz4) |")
 	ignorePatterns := flag.String("ignore", "", "Comma-separated list of file patterns to ignore")
 	filterPatterns := flag.String("filter", "", "Comma-separated list of file patterns to include (e.g. \"*.sc2,*.scg\")")
 	ignoreCompress := flag.String("ignore-compress", "", "Comma-separated list of file patterns to force no compression (type 0)")
 	forcedCompress := flag.Bool("forced-compress", false, "Forced compression, even if the result is larger than the original")
-	maxWorkers     := flag.Int("m", 1, fmt.Sprintf("Maximum number of parallel workers (%d). Minimum 1, recommended 2.", maxCPU))
+	maxWorkers := flag.Int("m", 1, fmt.Sprintf("Maximum number of parallel workers (%d). Minimum 1, recommended 2.", maxCPU))
 
 	flag.Usage = func() {
-		fmt.Println(`Usage: dvpl [options]
-Options:`)
+		fmt.Println(`
+dvpl_go 1.3.5 x64 | Copyright (c) 2025-2026 Qirashi
+
+Usage: dvpl [options]
+[Options]:`)
 		flag.PrintDefaults()
 		fmt.Println(`
 Examples:
@@ -225,7 +228,7 @@ func Unpack(inputPath, outputPath string, _ int, _ bool) error {
 	return nil
 }
 
-func debugPrintFlags(c *Config, compressFlag bool, inputPath, outputPath string, 
+func debugPrintFlags(c *Config, compressFlag bool, inputPath, outputPath string,
 	keepOriginal bool, compressType int, ignorePatterns, ignoreCompressPatterns, filterPatterns []string, maxWorkers int) {
 
 	var flags []string
@@ -271,11 +274,10 @@ func readConfig() *Config {
 
 	configPath := filepath.Join(filepath.Dir(exePath), ".dvpl_go.yml")
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		fmt.Println("[debug] Config file not found: .dvpl_go.yml")
 		return nil
 	}
 
-	fmt.Println("[debug] Config file found: .dvpl_go.yml")
+	fmt.Println("[debug] Configuration loaded: .dvpl_go.yml")
 
 	data, err := os.ReadFile(configPath)
 	if err != nil {
