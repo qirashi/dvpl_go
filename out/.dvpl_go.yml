@@ -4,6 +4,7 @@
 # decompressFlag: false  # (-d)
 # keepOriginal: false    # (-keep-original)
 # forcedCompress: false  # (-forced-compress)
+# skipCRC: false         # (-skip-crc)
 compress: 1            # (-compress)
 maxWorkers: 2          # (-m)
 ignorePatterns:        # (-ignore)

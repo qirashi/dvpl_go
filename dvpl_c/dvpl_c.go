@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2025 Qirashi
+// Copyright (c) 2026 Qirashi
 // Project: dvpl_go
 
 package dvpl_c
@@ -24,10 +24,7 @@ import (
 	// "io"
 )
 
-const (
-	FooterSize = 20 // 4 * 4 + 4
-	Marker     = "DVPL"
-)
+var Marker = [4]byte{'D', 'V', 'P', 'L'}
 
 func compressLZ4(data []byte, level int) ([]byte, error) {
 	bound := int(C.LZ4_compressBound(C.int(len(data))))
@@ -41,11 +38,9 @@ func compressLZ4(data []byte, level int) ([]byte, error) {
 
 	var compressedSize int
 	if level > 0 {
-		// Используем LZ4 HC
-		compressedSize = int(C.LZ4_compress_HC(src, dst, C.int(len(data)), C.int(bound), C.int(level)))
+		compressedSize = int(C.LZ4_compress_HC(src, dst, C.int(len(data)), C.int(bound), C.int(level))) // LZ4 HC
 	} else {
-		// Используем обычный LZ4
-		compressedSize = int(C.LZ4_compress_default(src, dst, C.int(len(data)), C.int(bound)))
+		compressedSize = int(C.LZ4_compress_default(src, dst, C.int(len(data)), C.int(bound))) // LZ4
 	}
 
 	if compressedSize <= 0 {
@@ -55,7 +50,6 @@ func compressLZ4(data []byte, level int) ([]byte, error) {
 	return compressed[:compressedSize], nil
 }
 
-// CGO
 func decompressLZ4(compressed []byte, uncompressedSize int) ([]byte, error) {
 	uncompressed := make([]byte, uncompressedSize)
 	src := (*C.char)(unsafe.Pointer(&compressed[0]))
@@ -69,7 +63,8 @@ func decompressLZ4(compressed []byte, uncompressedSize int) ([]byte, error) {
 
 	return uncompressed[:decompressedSize], nil
 }
-func Pack(data []byte, compressType int, forcedCompress bool) ([]byte, uint32, error) {
+
+func Pack(data []byte, compressType int, forcedCompress bool, skipCRC bool) ([]byte, uint32, error) {
 	if len(data) == 0 {
 		compressType = 0
 	}
@@ -78,7 +73,7 @@ func Pack(data []byte, compressType int, forcedCompress bool) ([]byte, uint32, e
 	var ptype uint32
 
 	switch compressType {
-	case 0: // Без сжатия
+	case 0: // none
 		result = data
 		ptype = 0
 	case 1: // LZ4 HC
@@ -89,10 +84,10 @@ func Pack(data []byte, compressType int, forcedCompress bool) ([]byte, uint32, e
 
 		if !forcedCompress && len(compressed) >= len(data) {
 			result = data
-			ptype = 0 // Без сжатия
+			ptype = 0
 		} else {
 			result = compressed
-			ptype = 1 // LZ4 HC
+			ptype = 1
 		}
 	case 2: // LZ4
 		compressed, err := compressLZ4(data, 0) // Уровень 0 для обычного LZ4
@@ -102,36 +97,35 @@ func Pack(data []byte, compressType int, forcedCompress bool) ([]byte, uint32, e
 
 		if !forcedCompress && len(compressed) >= len(data) {
 			result = data
-			ptype = 0 // Без сжатия
+			ptype = 0
 		} else {
 			result = compressed
-			ptype = 2 // LZ4
+			ptype = 2
 		}
 	// case 3: // rfc1951 (zlib)
-		// var compressed bytes.Buffer
-		// writer := zlib.NewWriter(&compressed)
-		// if _, err := writer.Write(data); err != nil {
-			// return result, ptype, fmt.Errorf("[error] Failed to compress data with zlib: %v", err)
-		// }
-		// if err := writer.Close(); err != nil {
-			// return result, ptype, fmt.Errorf("[error] Failed to close zlib writer: %v", err)
-		// }
+	// var compressed bytes.Buffer
+	// writer := zlib.NewWriter(&compressed)
+	// if _, err := writer.Write(data); err != nil {
+	// return result, ptype, fmt.Errorf("[error] Failed to compress data with zlib: %v", err)
+	// }
+	// if err := writer.Close(); err != nil {
+	// return result, ptype, fmt.Errorf("[error] Failed to close zlib writer: %v", err)
+	// }
 
-		// if !forcedCompress && compressed.Len() >= len(data) {
-			// result = data
-			// ptype = 0 // Без сжатия
-		// } else {
-			// result = compressed.Bytes()
-			// ptype = 3 // rfc1951
-		// }
+	// if !forcedCompress && compressed.Len() >= len(data) {
+	// result = data
+	// ptype = 0 // Без сжатия
+	// } else {
+	// result = compressed.Bytes()
+	// ptype = 3 // rfc1951
+	// }
 	default:
 		return result, ptype, fmt.Errorf("[error] Unsupported compression type: %d", compressType)
 	}
 
-	crc := crc32.ChecksumIEEE(result)
-
 	unpacked := uint32(len(data))
 	packed := uint32(len(result))
+	crc := crc32.ChecksumIEEE(result)
 
 	footer := struct {
 		Unpacked uint32
@@ -144,7 +138,7 @@ func Pack(data []byte, compressType int, forcedCompress bool) ([]byte, uint32, e
 		Packed:   packed,
 		CRC:      crc,
 		PType:    ptype,
-		Marker:   [4]byte{'D', 'V', 'P', 'L'},
+		Marker:   Marker,
 	}
 
 	// Добавляем футер к результату
@@ -157,61 +151,55 @@ func Pack(data []byte, compressType int, forcedCompress bool) ([]byte, uint32, e
 	return result, ptype, nil
 }
 
-func Unpack(data []byte) ([]byte, uint32, error) {
-	if len(data) < FooterSize {
-		return nil, 0, fmt.Errorf("invalid DVPL data: size %d is less than footer size %d", len(data), FooterSize)
+func Unpack(data []byte, skipCRC bool) ([]byte, uint32, error) {
+	const footerSize = 20 // Unpacked(4) + Packed(4) + CRC(4) + PType(4) + Marker(4)
+	if len(data) < footerSize {
+		return nil, 0, fmt.Errorf("invalid DVPL data: size %d is less than footer size %d", len(data), footerSize)
 	}
 
-	// Читаем футер (последние FooterSize байт)
-	footerData := data[len(data)-FooterSize:]
-	data = data[:len(data)-FooterSize] // Отрезаем футер от сжатых данных
+	footerBytes := data[len(data)-footerSize:]
+	data = data[:len(data)-footerSize]
 
-	footer := struct {
-		Unpacked uint32
-		Packed   uint32
-		CRC      uint32
-		PType    uint32
-		Marker   [4]byte
-	}{}
+	unpacked := binary.LittleEndian.Uint32(footerBytes[0:4])
+	crc := binary.LittleEndian.Uint32(footerBytes[8:12])
+	ptype := binary.LittleEndian.Uint32(footerBytes[12:16])
+	var marker [4]byte
+	copy(marker[:], footerBytes[16:20])
 
-	if err := binary.Read(bytes.NewReader(footerData), binary.LittleEndian, &footer); err != nil {
-		return nil, footer.PType, fmt.Errorf("[error] Failed to parse footer: %v", err)
+	if marker != Marker {
+		return nil, ptype, fmt.Errorf("[error] Invalid marker: %v", marker)
 	}
 
-	if string(footer.Marker[:]) != Marker {
-		return nil, footer.PType, fmt.Errorf("[error] Invalid marker: %s", footer.Marker)
-	}
-
-	// Проверяем CRC32
-	if crc32.ChecksumIEEE(data) != footer.CRC {
-		return nil, footer.PType, fmt.Errorf("[error] CRC32 mismatch")
+	if !skipCRC && crc32.ChecksumIEEE(data) != crc {
+		return nil, ptype, fmt.Errorf("[error] CRC32 mismatch")
 	}
 
 	var result []byte
-	var err error // Объявляем error здесь, чтобы использовать во всех case
+	var err error
 
-	switch footer.PType {
-	case 0: // Без сжатия
+	switch ptype {
+	case 0: // none
 		result = data
-	case 1, 2: // lz4
-		result, err = decompressLZ4(data, int(footer.Unpacked)) // Используем = вместо :=
+	case 1, 2: // LZ4
+		result, err = decompressLZ4(data, int(unpacked))
 		if err != nil {
-			return nil, footer.PType, fmt.Errorf("[error] Failed to decompress LZ4 data: %v", err)
+			return nil, ptype, fmt.Errorf("[error] Failed to decompress LZ4 data: %v", err)
 		}
 	// case 3: // rfc1951
-		// var reader io.ReadCloser
-		// reader, err = zlib.NewReader(bytes.NewReader(data))
-		// if err != nil {
-			// return nil, footer.PType, fmt.Errorf("[error] Failed to create zlib reader: %v", err)
-		// }
-		// defer reader.Close()
-		// result, err = io.ReadAll(reader)
-		// if err != nil {
-			// return nil, footer.PType, fmt.Errorf("[error] Failed to decompress zlib data: %v", err)
-		// }
+	// var reader io.ReadCloser
+	// reader, err = zlib.NewReader(bytes.NewReader(data))
+	// if err != nil {
+	// return nil, footer.PType, fmt.Errorf("[error] Failed to create zlib reader: %v", err)
+	// }
+	// defer reader.Close()
+	// result, err = io.ReadAll(reader)
+	// if err != nil {
+	// return nil, footer.PType, fmt.Errorf("[error] Failed to decompress zlib data: %v", err)
+	// }
+
 	default:
-		return nil, footer.PType, fmt.Errorf("[error] Unsupported compression type: %d", footer.PType)
+		return nil, ptype, fmt.Errorf("[error] Unsupported compression type: %d", ptype)
 	}
 
-	return result, footer.PType, nil
+	return result, ptype, nil
 }
