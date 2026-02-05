@@ -188,22 +188,22 @@ func Pack(inputPath, outputPath string, compressType int, forcedCompress bool, s
 	data, err := os.ReadFile(inputPath)
 
 	if err != nil {
-		return fmt.Errorf("[error] Failed to read input file: %v", err)
+		return fmt.Errorf("failed to read input file: %v", err)
 	}
 
 	dvplData, compressionType, err := dvpl.Pack(data, compressType, forcedCompress, skipCRC)
 	if err != nil {
-		return fmt.Errorf("[error] Failed to pack data: %v", err)
+		return fmt.Errorf("failed to pack data: %v", err)
 	}
 
 	fmt.Printf("Pack [%s]: %s\n", getCompressionTypeString(compressionType), inputPath)
 
 	if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
-		return fmt.Errorf("[error] Failed to create output directory: %v", err)
+		return fmt.Errorf("failed to create output directory: %v", err)
 	}
 
 	if err := os.WriteFile(outputPath, dvplData, 0644); err != nil {
-		return fmt.Errorf("[error] Failed to write output file: %v", err)
+		return fmt.Errorf("failed to write output file: %v", err)
 	}
 
 	return nil
@@ -214,12 +214,12 @@ func Unpack(inputPath, outputPath string, _ int, _ bool, skipCRC bool) error {
 	dvplData, err := os.ReadFile(inputPath)
 
 	if err != nil {
-		return fmt.Errorf("[error] Failed to read input file: %v", err)
+		return fmt.Errorf("failed to read input file: %v", err)
 	}
 
 	data, compressionType, err := dvpl.Unpack(dvplData, skipCRC)
 	if err != nil {
-		return fmt.Errorf("[error] Failed to unpack data: %v", err)
+		return fmt.Errorf("failed to unpack data: %v", err)
 	}
 
 	fmt.Printf("Unpack [%s]: %s\n", getCompressionTypeString(compressionType), inputPath)
@@ -227,11 +227,11 @@ func Unpack(inputPath, outputPath string, _ int, _ bool, skipCRC bool) error {
 	outputPath = strings.TrimSuffix(outputPath, DvplExt)
 
 	if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
-		return fmt.Errorf("[error] Failed to create output directory: %v", err)
+		return fmt.Errorf("failed to create output directory: %v", err)
 	}
 
 	if err := os.WriteFile(outputPath, data, 0644); err != nil {
-		return fmt.Errorf("[error] Failed to write output file: %v", err)
+		return fmt.Errorf("failed to write output file: %v", err)
 	}
 
 	return nil
