@@ -184,9 +184,22 @@ func getCompressionTypeString(compressionType uint32) string {
 }
 
 func Pack(inputPath, outputPath string, compressType int, forcedCompress bool, skipCRC bool) error {
+	fileInfo, err := os.Stat(inputPath)
+	if err != nil {
+		return fmt.Errorf("failed to get file info: %v", err)
+	}
+
+	fileSize := fileInfo.Size()
+
+	if fileSize > 1<<32-1 {
+		return fmt.Errorf("input file too large: %d bytes (max %d)", fileSize, 1<<32-1)
+	}
+
+	if (compressType == 1 || compressType == 2) && fileSize > 0x7E000000 {
+		return fmt.Errorf("input file too large for raw LZ4 compression: %d bytes (max %d)", fileSize, 0x7E000000)
+	}
 
 	data, err := os.ReadFile(inputPath)
-
 	if err != nil {
 		return fmt.Errorf("failed to read input file: %v", err)
 	}

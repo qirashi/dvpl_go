@@ -66,13 +66,6 @@ func decompressLZ4(compressed []byte, uncompressedSize int) ([]byte, error) {
 
 func Pack(data []byte, compressType int, forcedCompress bool, skipCRC bool) ([]byte, uint32, error) {
 	lenData := len(data)
-	if lenData > 1<<32-1 {
-		return nil, 0, fmt.Errorf("input data too large: %d bytes (max %d)", lenData, 1<<32-1)
-	}
-
-	if (compressType == 1 || compressType == 2) && lenData > 0x7E000000 {
-		return nil, 0, fmt.Errorf("input data too large for raw LZ4: %d bytes (max %d)", lenData, 0x7E000000)
-	}
 
 	if lenData == 0 {
 		compressType = 0
