@@ -1,7 +1,9 @@
 # dvpl_go [RU] | [EN](README_EN.md)
 
- > [!NOTE]
+ > [!INFO]
  > В данном конвертере для ускорения сжатия и улучшения его качества была использована библиотека [lz4](https://github.com/lz4/lz4).
+ > 
+ > Формат имеет ограничения по размеру сжимаемых данных!
 
 <div align="center">
 	
@@ -28,9 +30,12 @@
 
 ```cmd
 R:\Github\dvpl_go>dvpl.exe -h
-[debug] Config file found: .dvpl_go.yml
+[debug] Configuration loaded: .dvpl_go.yml
+
+dvpl_go 1.3.5 x64 | Copyright (c) 2026 Qirashi
+
 Usage: dvpl [options]
-Options:
+[Options]:
   -c    Compress .dvpl files
   -compress int
         Compression type: 0 (none), 1 (lz4hc), 2 (lz4) | (default 1)
@@ -51,6 +56,8 @@ Options:
         Maximum number of parallel workers (12). Minimum 1, recommended 2. (default 1)
   -o string
         Output path (file or directory)
+  -skip-crc
+        When unpacking, the crc will be ignored.
 
 Examples:
   Compress   : dvpl -c -i ./input_dir -o ./output_dir
@@ -108,13 +115,17 @@ Examples:
         - "*.scg"
         ignoreCompress:
         - "*.webp"
+        skipCRC: false
 
 - `-m` - Максимальное количество параллельных обработчиков (workers).
     - По умолчанию: 1 (однопоточный режим)
     - Оптимальное значение: 2-4 (зависит от CPU)
     - При указании значений > максимума автоматически корректируется.
     - Максимальное кол-во зависит от ядер и потоков процессора.
+    > [!WARNING]
     > **Возможны проблемы работы многопоточного режима на энергоэффективных ядрах от Intel.**
+
+- `-skip-crc` - При распаковке CRC будет проигнорирован.
 
 ## Сравнение скорости работы и сжатия
 

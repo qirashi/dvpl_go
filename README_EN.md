@@ -2,6 +2,8 @@
 
  > [!NOTE]
  > In this converter, the [lz4](https://github.com/lz4/lz4) library was used to speed up compression and improve its quality.
+ > 
+ > The format has limitations on the size of compressed data!
 
 <div align="center">
 	
@@ -28,9 +30,12 @@
 
 ```cmd
 R:\Github\dvpl_go>dvpl.exe -h
-[debug] Config file found: .dvpl_go.yml
+[debug] Configuration loaded: .dvpl_go.yml
+
+dvpl_go 1.3.5 x64 | Copyright (c) 2026 Qirashi
+
 Usage: dvpl [options]
-Options:
+[Options]:
   -c    Compress .dvpl files
   -compress int
         Compression type: 0 (none), 1 (lz4hc), 2 (lz4) | (default 1)
@@ -51,6 +56,8 @@ Options:
         Maximum number of parallel workers (12). Minimum 1, recommended 2. (default 1)
   -o string
         Output path (file or directory)
+  -skip-crc
+        When unpacking, the crc will be ignored.
 
 Examples:
   Compress   : dvpl -c -i ./input_dir -o ./output_dir
@@ -108,13 +115,17 @@ Examples:
         - "*.scg"
         ignoreCompress:
         - "*.webp"
+        skipCRC: false
 
 - `-m` is the maximum number of parallel handlers (workers).
     - Default: 1 (single-threaded mode)
     - Optimal value: 2-4 (depends on CPU)
     - When values > maximum are specified, it is automatically adjusted.
     - The maximum number depends on the cores and threads of the processor.
+    > [!WARNING]
     > **There may be problems with multithreaded mode running on energy-efficient cores from Intel.**
+
+- `-skip-crc` - When unpacking, the CRC will be ignored.
 
 ## Comparison of operation speed and compression
 
