@@ -122,8 +122,8 @@ Examples:
     - Optimal value: 2-4 (depends on CPU)
     - When values > maximum are specified, it is automatically adjusted.
     - The maximum number depends on the cores and threads of the processor.
-    > [!WARNING]
-    > **There may be problems with multithreaded mode running on energy-efficient cores from Intel.**
+> [!WARNING]
+> **There may be problems with multithreaded mode running on energy-efficient cores from Intel.**
 
 - `-skip-crc` - When unpacking, the CRC will be ignored.
 
