@@ -17,11 +17,12 @@ import (
 	"sync"
 
 	"github.com/eiannone/keyboard"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 )
 
 const (
 	DvplExt = ".dvpl"
+	DpvlInf = "dvpl_go 1.3.5 x64 | Copyright (c) 2026 Qirashi"
 )
 
 type Config struct {
@@ -56,11 +57,7 @@ func main() {
 	skipCRC := flag.Bool("skip-crc", false, "When unpacking, the crc will be ignored.")
 
 	flag.Usage = func() {
-		fmt.Println(`
-dvpl_go 1.3.5 x64 | Copyright (c) 2026 Qirashi
-
-Usage: dvpl [options]
-[Options]:`)
+		fmt.Printf("\n%s\n\nUsage: dvpl [options]\n[Options]:\n", DpvlInf)
 		flag.PrintDefaults()
 		fmt.Println(`
 Examples:
@@ -316,45 +313,50 @@ func readConfig() *Config {
 	return &config
 }
 
+func nameForFilter(baseName string, compress bool) string {
+	if compress {
+		return baseName
+	}
+	return strings.TrimSuffix(baseName, DvplExt)
+}
+
+func matchesAnyPattern(name string, patterns []string) bool {
+	for _, p := range patterns {
+		if matched, _ := filepath.Match(strings.TrimSpace(p), name); matched {
+			return true
+		}
+	}
+	return false
+}
+
+func matchesFilter(nameToMatch string, filterPatterns []string) bool {
+	if len(filterPatterns) == 0 {
+		return true
+	}
+	return matchesAnyPattern(nameToMatch, filterPatterns)
+}
+
 func shouldProcessFile(path string, info os.FileInfo, exeFileName string, compressFlag bool, ignorePatterns, filterPatterns []string) bool {
-	if compressFlag && (info.Name() == ".dvpl_go.yml" || info.Name() == exeFileName) {
+	name := info.Name()
+
+	if compressFlag && (name == ".dvpl_go.yml" || name == exeFileName) {
 		fmt.Printf("Excluding file: %s\n", path)
 		return false
 	}
-
-	if compressFlag && strings.HasSuffix(info.Name(), DvplExt) {
+	if compressFlag && strings.HasSuffix(name, DvplExt) {
 		return false
 	}
-
-	if !compressFlag && !strings.HasSuffix(info.Name(), DvplExt) {
+	if !compressFlag && !strings.HasSuffix(name, DvplExt) {
 		return false
 	}
-
-	for _, pattern := range ignorePatterns {
-		if matched, _ := filepath.Match(pattern, info.Name()); matched {
-			fmt.Printf("Ignoring file: %s\n", path)
-			return false
-		}
+	if matchesAnyPattern(name, ignorePatterns) {
+		fmt.Printf("Ignoring file: %s\n", path)
+		return false
 	}
-
-	if len(filterPatterns) > 0 {
-		nameToMatch := info.Name()
-		if !compressFlag {
-			nameToMatch = strings.TrimSuffix(nameToMatch, DvplExt)
-		}
-		matchedAny := false
-		for _, pattern := range filterPatterns {
-			if matched, _ := filepath.Match(strings.TrimSpace(pattern), nameToMatch); matched {
-				matchedAny = true
-				break
-			}
-		}
-		if !matchedAny {
-			fmt.Printf("Filter skip: %s\n", path)
-			return false
-		}
+	if !matchesFilter(nameForFilter(name, compressFlag), filterPatterns) {
+		fmt.Printf("Filter skip: %s\n", path)
+		return false
 	}
-
 	return true
 }
 
@@ -378,153 +380,89 @@ func processFiles(inputPath, outputPath string,
 	}
 
 	exeFileName := filepath.Base(os.Args[0])
+	tasks := make(chan task, maxWorkers*2)
+	errorsCh := make(chan error, maxWorkers*2)
+	var wg sync.WaitGroup
 
-	if info.IsDir() {
-		if maxWorkers <= 1 {
-			// Однопоточный режим
-			filepath.WalkDir(inputPath, func(path string, d fs.DirEntry, err error) error {
-				if err != nil {
-					fmt.Printf("[error] Error accessing path %s: %v\n", path, err)
-					return nil
-				}
+	for i := 0; i < maxWorkers; i++ {
+		wg.Add(1)
+		go worker(tasks, errorsCh, &wg)
+	}
 
-				if !d.IsDir() {
-					info, _ := d.Info() // получаем os.FileInfo только при необходимости
-					if !shouldProcessFile(path, info, exeFileName, compressFlag, ignorePatterns, filterPatterns) {
-						return nil
-					}
-
-					relativePath, _ := filepath.Rel(inputPath, path)
-					outPath := filepath.Join(outputPath, relativePath)
-					if newExt != "" {
-						outPath += newExt
-					}
-
-					actualCompressType := compressType
-					for _, pattern := range ignoreCompressPatterns {
-						if matched, _ := filepath.Match(pattern, info.Name()); matched {
-							actualCompressType = 0
-							break
-						}
-					}
-
-					if err := processor(path, outPath, actualCompressType, forcedCompress, skipCRC); err != nil {
-						fmt.Printf("[error] Error processing file %s: %v\n", path, err)
-					} else if !keepOriginal {
-						os.Remove(path)
-					}
-				}
-				return nil
-			})
-		} else {
-			// Многопоточный режим
-			tasks := make(chan task, maxWorkers*2)
-			errors := make(chan error, maxWorkers*2)
-			var wg sync.WaitGroup
-
-			for i := 0; i < maxWorkers; i++ {
-				wg.Add(1)
-				go worker(tasks, errors, &wg)
-			}
-
-			go func() {
-				for err := range errors {
-					fmt.Printf("[error] %v\n", err)
-				}
-			}()
-
-			filepath.WalkDir(inputPath, func(path string, d fs.DirEntry, err error) error {
-				if err != nil {
-					fmt.Printf("[error] Error accessing path %s: %v\n", path, err)
-					return nil
-				}
-
-				if !d.IsDir() {
-					info, _ := d.Info()
-					if !shouldProcessFile(path, info, exeFileName, compressFlag, ignorePatterns, filterPatterns) {
-						return nil
-					}
-
-					relativePath, _ := filepath.Rel(inputPath, path)
-					outPath := filepath.Join(outputPath, relativePath)
-					if newExt != "" {
-						outPath += newExt
-					}
-
-					ignoreCompress := false
-					for _, pattern := range ignoreCompressPatterns {
-						if matched, _ := filepath.Match(pattern, info.Name()); matched {
-							ignoreCompress = true
-							break
-						}
-					}
-
-					tasks <- task{
-						path:           path,
-						outPath:        outPath,
-						processor:      processor,
-						compressType:   compressType,
-						ignoreCompress: ignoreCompress,
-						keepOriginal:   keepOriginal,
-						forcedCompress: forcedCompress,
-						skipCRC:        skipCRC,
-					}
-				}
-				return nil
-			})
-
-			close(tasks)
-			wg.Wait()
-			close(errors)
+	var errList []error
+	var errMu sync.Mutex
+	var collectWg sync.WaitGroup
+	collectWg.Add(1)
+	go func() {
+		defer collectWg.Done()
+		for err := range errorsCh {
+			errMu.Lock()
+			errList = append(errList, err)
+			errMu.Unlock()
 		}
-	} else {
-		// Обработка одиночного файла
-		if compressFlag && strings.HasSuffix(inputPath, DvplExt) {
-			fmt.Printf("Skipping .dvpl file: %s\n", inputPath)
-			return
-		}
+	}()
 
-		outPath := outputPath
+	effectiveCompress := func(name string) int {
+		if matchesAnyPattern(name, ignoreCompressPatterns) {
+			return 0
+		}
+		return compressType
+	}
+
+	addTask := func(path string, info os.FileInfo) {
+		relativePath, _ := filepath.Rel(inputPath, path)
+		outPath := filepath.Join(outputPath, relativePath)
 		if newExt != "" {
 			outPath += newExt
 		}
-
-		if len(filterPatterns) > 0 {
-			baseName := filepath.Base(inputPath)
-			nameToMatch := baseName
-			if !compressFlag {
-				nameToMatch = strings.TrimSuffix(baseName, DvplExt)
-			}
-			matchedAny := false
-			for _, pattern := range filterPatterns {
-				if matched, _ := filepath.Match(strings.TrimSpace(pattern), nameToMatch); matched {
-					matchedAny = true
-					break
-				}
-			}
-			if !matchedAny {
-				fmt.Printf("Filter skip: %s\n", inputPath)
-				return
-			}
-		}
-
-		actualCompressType := compressType
-		info, _ := os.Stat(inputPath)
-		for _, pattern := range ignoreCompressPatterns {
-			if matched, _ := filepath.Match(pattern, info.Name()); matched {
-				actualCompressType = 0
-				break
-			}
-		}
-
-		if err := processor(inputPath, outPath, actualCompressType, forcedCompress, skipCRC); err != nil {
-			fmt.Printf("[error] Error processing file %s: %v\n", inputPath, err)
-		} else if !keepOriginal {
-			os.Remove(inputPath)
+		tasks <- task{
+			path:           path,
+			outPath:        outPath,
+			processor:      processor,
+			compressType:   effectiveCompress(info.Name()),
+			keepOriginal:   keepOriginal,
+			forcedCompress: forcedCompress,
+			skipCRC:        skipCRC,
 		}
 	}
 
-	fmt.Println("\nOperation completed!")
+	finishAndReturn := func() {
+		close(tasks)
+		wg.Wait()
+		close(errorsCh)
+		collectWg.Wait()
+		fmt.Println("\nOperation completed!")
+		errMu.Lock()
+		for _, e := range errList {
+			fmt.Printf("[error] %v\n", e)
+		}
+		errMu.Unlock()
+	}
+
+	if info.IsDir() {
+		filepath.WalkDir(inputPath, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				fmt.Printf("[error] Error accessing path %s: %v\n", path, err)
+				return nil
+			}
+			if d.IsDir() {
+				return nil
+			}
+			fileInfo, _ := d.Info()
+			if shouldProcessFile(path, fileInfo, exeFileName, compressFlag, ignorePatterns, filterPatterns) {
+				addTask(path, fileInfo)
+			}
+			return nil
+		})
+	} else {
+		if !shouldProcessFile(inputPath, info, exeFileName, compressFlag, ignorePatterns, filterPatterns) {
+			finishAndReturn()
+			return
+		}
+		addTask(inputPath, info)
+	}
+
+	finishAndReturn()
 }
 
 type task struct {
@@ -532,7 +470,6 @@ type task struct {
 	outPath        string
 	processor      func(string, string, int, bool, bool) error
 	compressType   int
-	ignoreCompress bool
 	keepOriginal   bool
 	forcedCompress bool
 	skipCRC        bool
@@ -541,17 +478,22 @@ type task struct {
 func worker(tasks <-chan task, errors chan<- error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for task := range tasks {
-		actualCompressType := task.compressType
-		if task.ignoreCompress {
-			actualCompressType = 0
-		}
-
-		if err := task.processor(task.path, task.outPath, actualCompressType, task.forcedCompress, task.skipCRC); err != nil {
+		if err := task.processor(task.path, task.outPath, task.compressType, task.forcedCompress, task.skipCRC); err != nil {
 			errors <- fmt.Errorf("processing file %s: %v", task.path, err)
 		} else if !task.keepOriginal {
 			if err := os.Remove(task.path); err != nil {
 				errors <- fmt.Errorf("removing original file %s: %v", task.path, err)
 			}
+		}
+	}
+}
+
+func drawMenu(options []string, selected int) {
+	for i, option := range options {
+		if i == selected {
+			fmt.Printf("> %s\n", option)
+		} else {
+			fmt.Printf("  %s\n", option)
 		}
 	}
 }
@@ -564,26 +506,26 @@ func interactiveMode() {
 	}
 	defer keyboard.Close()
 
-	options := []string{"Compress", "Decompress", "Help", "Exit"}
+	fmt.Print("\033[?25l")       // hide cursor
+	defer fmt.Print("\033[?25h") // show cursor
+	fmt.Print("\033[2J\033[H")   // clear once
+
+	options := []string{
+		"Compress",
+		"Decompress",
+		"Help",
+	}
 	selectedIndex := 0
 
 	for {
-		// Очистка экрана
-		fmt.Print("\033[H\033[2J")
-		fmt.Println("Usage: dvpl_go [-h] - To get help.")
+		fmt.Printf("\033[H%s\n\nUsage: dvpl_go [-h] - To get help.\nPress Ctrl+C or Esc to exit.\n\n", DpvlInf)
 
-		for i, option := range options {
-			if i == selectedIndex {
-				fmt.Printf("> %s\n", option)
-			} else {
-				fmt.Printf("  %s\n", option)
-			}
-		}
+		drawMenu(options, selectedIndex)
 
 		event := <-keysEvents
 		if event.Err != nil {
 			fmt.Printf("[error] Keyboard error: %v\n", event.Err)
-			break
+			return
 		}
 
 		switch event.Key {
@@ -598,22 +540,19 @@ func interactiveMode() {
 				selectedIndex = 0
 			}
 		case keyboard.KeyEnter:
-			fmt.Println("\nYou selected:", options[selectedIndex])
+			fmt.Print("\033[2J\033[H")
 			switch selectedIndex {
-			case 0: // Compress
+			case 0:
 				compressInteractive()
-				return
-			case 1: // Decompress
+			case 1:
 				decompressInteractive()
-				return
-			case 2: // Help
+			case 2:
 				flag.Usage()
 				<-keysEvents
-				return
-			case 3: // Exit
-				fmt.Println("Exiting...")
-				return
 			}
+			return
+		case keyboard.KeyEsc:
+			return
 		}
 	}
 }
@@ -626,25 +565,27 @@ func compressInteractive() {
 	}
 	defer keyboard.Close()
 
-	options := []string{"0. none", "1. lz4hc", "2. lz4"}
+	fmt.Print("\033[?25l")
+	defer fmt.Print("\033[?25h")
+	fmt.Print("\033[2J\033[H")
+
+	options := []string{
+		"[0] none",
+		"[1] lz4hc",
+		"[2] lz4",
+	}
 	compressionTypes := []int{0, 1, 2}
 	selectedIndex := 1
 
 	for {
-		fmt.Print("\033[H\033[2J")
+		fmt.Printf("\033[H%s\n\nSelect compression type.\nPress Ctrl+C or Esc to exit.\n\n", DpvlInf)
 
-		for i, option := range options {
-			if i == selectedIndex {
-				fmt.Printf("> %s\n", option)
-			} else {
-				fmt.Printf("  %s\n", option)
-			}
-		}
+		drawMenu(options, selectedIndex)
 
 		event := <-keysEvents
 		if event.Err != nil {
 			fmt.Printf("[error] Keyboard error: %v\n", event.Err)
-			break
+			return
 		}
 
 		switch event.Key {
@@ -659,15 +600,18 @@ func compressInteractive() {
 				selectedIndex = 0
 			}
 		case keyboard.KeyEnter:
+			fmt.Print("\033[2J\033[H")
 			selectedCompressionType := compressionTypes[selectedIndex]
-			fmt.Println("\nYou selected compression type:", options[selectedIndex])
+			fmt.Println("Start compressing...")
 			processFiles(".", ".", Pack, DvplExt, false, true, selectedCompressionType, nil, nil, nil, 1, false, false)
+			return
+		case keyboard.KeyEsc:
 			return
 		}
 	}
 }
 
 func decompressInteractive() {
-	fmt.Println("Decompressing files in current directory...")
+	fmt.Println("Start decompressing...")
 	processFiles(".", ".", Unpack, "", false, false, 0, nil, nil, nil, 1, false, true)
 }
