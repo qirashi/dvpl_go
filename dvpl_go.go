@@ -22,7 +22,7 @@ import (
 
 const (
 	DvplExt = ".dvpl"
-	DpvlInf = "dvpl_go 1.3.5 x64 | Copyright (c) 2026 Qirashi"
+	DpvlInf = "dvpl_go 1.4.0 x64 | Copyright (c) 2026 Qirashi"
 )
 
 type Config struct {
@@ -69,6 +69,18 @@ Examples:
   Compression: dvpl -c -i ./input_dir -compress 2`)
 	}
 
+	if len(os.Args) == 1 {
+		interactiveMode()
+		return
+	}
+
+	if len(os.Args) > 1 {
+		if !strings.HasPrefix(os.Args[1], "-") {
+			dragAndDropMode(os.Args[1:])
+			return
+		}
+	}
+
 	config := readConfig()
 	if config != nil {
 		if config.CompressFlag {
@@ -111,8 +123,9 @@ Examples:
 
 	flag.Parse()
 
-	if len(os.Args) == 1 {
-		interactiveMode()
+	if (*compressFlag && *decompressFlag) || (!*compressFlag && !*decompressFlag) {
+		fmt.Println("[debug] Please specify either -c (compress) or -d (decompress)")
+		flag.Usage()
 		return
 	}
 
@@ -123,12 +136,6 @@ Examples:
 
 	if *outputPath == "" {
 		*outputPath = *inputPath
-	}
-
-	if (*compressFlag && *decompressFlag) || (!*compressFlag && !*decompressFlag) {
-		fmt.Println("[debug] Please specify either -c (compress) or -d (decompress)")
-		flag.Usage()
-		return
 	}
 
 	var ignoreList []string
@@ -245,6 +252,26 @@ func Unpack(inputPath, outputPath string, _ int, _ bool, skipCRC bool) error {
 	}
 
 	return nil
+}
+
+func dragAndDropMode(paths []string) {
+	for _, path := range paths {
+		info, err := os.Stat(path)
+		if err != nil {
+			continue
+		}
+
+		if info.IsDir() {
+			fmt.Println("[info] Drag & Drop mode does not support working with folders!")
+			continue
+		}
+
+		if strings.HasSuffix(strings.ToLower(path), DvplExt) {
+			processFiles(path, path, Unpack, "", false, false, 0, nil, nil, nil, 2, false, true)
+		} else {
+			processFiles(path, path, Pack, DvplExt, false, true, 1, nil, nil, nil, 2, false, false)
+		}
+	}
 }
 
 func debugPrintFlags(c *Config, compressFlag bool, inputPath, outputPath string,
