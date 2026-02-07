@@ -32,7 +32,7 @@
 R:\Github\dvpl_go>dvpl.exe -h
 [debug] Configuration loaded: .dvpl_go.yml
 
-dvpl_go 1.3.5 x64 | Copyright (c) 2026 Qirashi
+dvpl_go 1.4.1 x64 | Copyright (c) 2026 Qirashi
 
 Usage: dvpl [options]
 [Options]:
@@ -96,26 +96,15 @@ Examples:
     - `image_[xyz].png` — Ignore files `image_x.png`, `image_y.png`, `image_z.png`.
 
     #### The contents of the .dvpl_go.yml:
-        compress: 1
-        keepOriginal: false
-        inputPath: "./input_dir"
-        outputPath: "./output_dir"
-        compressFlag: false
-        decompressFlag: false
-        forcedCompress: false
-        maxWorkers: 2
-        ignorePatterns:
-        - "*.exe"
-        - "*.dll"
-        - "*.pdb"
-        - "*.pak"
-        - "temp*"
-        filterPatterns:
-        - "*.sc2"
-        - "*.scg"
-        ignoreCompress:
-        - "*.webp"
-        skipCRC: false
+```yaml
+CompressType: 1  # (-compress)
+IgnorePatterns:  # (-ignore)
+- "*.exe"
+- "*.dll"
+IgnoreCompress:  # (-ignore-compress)
+- "*.webp"
+MaxWorkers: 2    # (-m)
+```
 
 - `-m` is the maximum number of parallel handlers (workers).
     - Default: 1 (single-threaded mode)
