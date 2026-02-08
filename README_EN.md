@@ -9,9 +9,8 @@
 # dvpl_go [RU](README.md) | [EN]
 
   > [!NOTE]
-  > The converter uses the [lz4](https://github.com/lz4/lz4) library to improve compression speed and quality.
-  > 
-  > The format has limitations on the size of compressed data!
+  > The converter uses the [lz4](https://github.com/lz4/lz4) library to improve compression speed and quality.  
+  > The format has limitations on the size of compressed data!  
 
 ## How to use?
   > [!TIP]  
