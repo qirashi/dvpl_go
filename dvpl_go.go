@@ -22,14 +22,22 @@ import (
 
 const (
 	DvplExt = ".dvpl"
-	DpvlInf = "dvpl_go 1.4.1 x64 | Copyright (c) 2026 Qirashi"
+	DpvlInf = "dvpl_go 1.4.0 x64 | Copyright (c) 2026 Qirashi"
 )
 
 type Config struct {
-	CompressType   int      `yaml:"CompressType"`
-	IgnorePatterns []string `yaml:"IgnorePatterns"`
-	IgnoreCompress []string `yaml:"IgnoreCompress"`
-	MaxWorkers     int      `yaml:"MaxWorkers"`
+	CompressFlag   bool     `yaml:"compressFlag"`
+	DecompressFlag bool     `yaml:"decompressFlag"`
+	InputPath      string   `yaml:"inputPath"`
+	OutputPath     string   `yaml:"outputPath"`
+	KeepOriginal   bool     `yaml:"keepOriginal"`
+	CompressType   int      `yaml:"compress"`
+	IgnorePatterns []string `yaml:"ignorePatterns"`
+	FilterPatterns []string `yaml:"filterPatterns"`
+	IgnoreCompress []string `yaml:"ignoreCompress"`
+	ForcedCompress bool     `yaml:"forcedCompress"`
+	MaxWorkers     int      `yaml:"maxWorkers"`
+	SkipCRC        bool     `yaml:"skipCRC"`
 }
 
 func main() {
@@ -75,14 +83,38 @@ Examples:
 
 	config := readConfig()
 	if config != nil {
+		if config.CompressFlag {
+			*compressFlag = true
+		}
+		if config.DecompressFlag {
+			*decompressFlag = true
+		}
+		if config.InputPath != "" {
+			*inputPath = config.InputPath
+		}
+		if config.OutputPath != "" {
+			*outputPath = config.OutputPath
+		}
+		if config.KeepOriginal {
+			*keepOriginal = true
+		}
 		if config.CompressType != 0 {
 			*compressType = config.CompressType
+		}
+		if config.ForcedCompress {
+			*forcedCompress = true
 		}
 		if config.MaxWorkers != 0 {
 			*maxWorkers = config.MaxWorkers
 		}
+		if config.SkipCRC {
+			*skipCRC = true
+		}
 		if len(config.IgnorePatterns) > 0 {
 			*ignorePatterns = strings.Join(config.IgnorePatterns, ",")
+		}
+		if len(config.FilterPatterns) > 0 {
+			*filterPatterns = strings.Join(config.FilterPatterns, ",")
 		}
 		if len(config.IgnoreCompress) > 0 {
 			*ignoreCompress = strings.Join(config.IgnoreCompress, ",")
@@ -130,6 +162,8 @@ Examples:
 		fmt.Printf("[info]  maxWorkers value %d is too high, using maximum %d\n", *maxWorkers, maxCPU)
 		*maxWorkers = maxCPU
 	}
+
+	debugPrintFlags(config, *compressFlag, *inputPath, *outputPath, *keepOriginal, *compressType, ignoreList, ignoreCompressList, filterList, *maxWorkers)
 
 	if *compressFlag {
 		processFiles(*inputPath, *outputPath, Pack, DvplExt, *keepOriginal, *compressFlag, *compressType, ignoreList, ignoreCompressList, filterList, *maxWorkers, *forcedCompress, *skipCRC)
@@ -240,6 +274,43 @@ func dragAndDropMode(paths []string) {
 	}
 }
 
+func debugPrintFlags(c *Config, compressFlag bool, inputPath, outputPath string,
+	keepOriginal bool, compressType int, ignorePatterns, ignoreCompressPatterns, filterPatterns []string, maxWorkers int) {
+
+	var flags []string
+
+	if compressFlag {
+		flags = append(flags, "-c")
+	} else {
+		flags = append(flags, "-d")
+	}
+
+	flags = append(flags, fmt.Sprintf("-i \"%s\"", inputPath))
+	if outputPath != inputPath {
+		flags = append(flags, fmt.Sprintf("-o \"%s\"", outputPath))
+	}
+	if keepOriginal {
+		flags = append(flags, "-keep-original")
+	}
+	flags = append(flags, fmt.Sprintf("-compress %d", compressType))
+	if len(ignorePatterns) > 0 {
+		flags = append(flags, fmt.Sprintf("-ignore \"%s\"", strings.Join(ignorePatterns, ",")))
+	}
+	if len(ignoreCompressPatterns) > 0 {
+		flags = append(flags, fmt.Sprintf("-ignore-compress \"%s\"", strings.Join(ignoreCompressPatterns, ",")))
+	}
+	if len(filterPatterns) > 0 {
+		flags = append(flags, fmt.Sprintf("-filter \"%s\"", strings.Join(filterPatterns, ",")))
+	}
+	flags = append(flags, fmt.Sprintf("-m %d", maxWorkers))
+
+	source := "cmd"
+	if c != nil {
+		source = "cfg"
+	}
+	fmt.Printf("[debug] [%s] [%s]\n", strings.Join(flags, " "), source)
+}
+
 func readConfig() *Config {
 	exePath, err := os.Executable()
 	if err != nil {
@@ -248,16 +319,17 @@ func readConfig() *Config {
 	}
 
 	configPath := filepath.Join(filepath.Dir(exePath), ".dvpl_go.yml")
-
-	data, err := os.ReadFile(configPath)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			fmt.Printf("[error] Error reading config file: %v\n", err)
-		}
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		return nil
 	}
 
 	fmt.Println("[debug] Configuration loaded: .dvpl_go.yml")
+
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		fmt.Printf("[error] Error reading config file: %v\n", err)
+		return nil
+	}
 
 	var config Config
 	if err := yaml.Unmarshal(data, &config); err != nil {

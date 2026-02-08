@@ -1,7 +1,17 @@
-CompressType: 1    # (-compress)
-IgnorePatterns:    # (-ignore)
+# inputPath: "./input"   # (-i)
+# outputPath: "./output" # (-o)
+# compressFlag: false    # (-c)
+# decompressFlag: false  # (-d)
+# keepOriginal: false    # (-keep-original)
+# forcedCompress: false  # (-forced-compress)
+# skipCRC: false         # (-skip-crc)
+compress: 1            # (-compress)
+maxWorkers: 2          # (-m)
+ignorePatterns:        # (-ignore)
   - "*.exe"
   - "*.dll"
-IgnoreCompress:    # (-ignore-compress)
-  - "*.webp"
-MaxWorkers: 2      # (-m)
+# filterPatterns:        # (-filter)
+  # - "*.sc2"
+  # - "*.scg"
+# ignoreCompress:        # (-ignore-compress)
+  # - "*.webp"

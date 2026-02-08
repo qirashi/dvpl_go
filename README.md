@@ -32,7 +32,7 @@
 R:\Github\dvpl_go>dvpl.exe -h
 [debug] Configuration loaded: .dvpl_go.yml
 
-dvpl_go 1.4.1 x64 | Copyright (c) 2026 Qirashi
+dvpl_go 1.3.5 x64 | Copyright (c) 2026 Qirashi
 
 Usage: dvpl [options]
 [Options]:
@@ -96,15 +96,26 @@ Examples:
     - `image_[xyz].png` — игнорировать файлы `image_x.png`, `image_y.png`, `image_z.png`.
 
     #### Содержимое .dvpl_go.yml:
-```yaml
-CompressType: 1  # (-compress)
-IgnorePatterns:  # (-ignore)
-- "*.exe"
-- "*.dll"
-IgnoreCompress:  # (-ignore-compress)
-- "*.webp"
-MaxWorkers: 2    # (-m)
-```
+        compress: 1
+        keepOriginal: false
+        inputPath: "./input_dir"
+        outputPath: "./output_dir"
+        compressFlag: false
+        decompressFlag: false
+        forcedCompress: false
+        maxWorkers: 2
+        ignorePatterns:
+        - "*.exe"
+        - "*.dll"
+        - "*.pdb"
+        - "*.pak"
+        - "temp*"
+        filterPatterns:
+        - "*.sc2"
+        - "*.scg"
+        ignoreCompress:
+        - "*.webp"
+        skipCRC: false
 
 - `-m` - Максимальное количество параллельных обработчиков (workers).
     - По умолчанию: 1 (однопоточный режим)
