@@ -1,10 +1,3 @@
-# dvpl_go [RU](README.md) | [EN]
-
- > [!NOTE]
- > In this converter, the [lz4](https://github.com/lz4/lz4) library was used to speed up compression and improve its quality.
- > 
- > The format has limitations on the size of compressed data!
-
 <div align="center">
 	
 [![GitHub license](https://img.shields.io/github/license/qirashi/dvpl_go?logo=apache&label=License&style=flat  )](https://github.com/qirashi/dvpl_go/blob/main/LICENSE  )
@@ -13,20 +6,26 @@
 
 </div>
 
-## How to use the converter?
-* [Гайд на Русском](.readme/how_to_use.md)
-* [Guide in English](.readme/how_to_use_en.md)
+# dvpl_go [RU](README.md) | [EN]
 
-## Description
+  > [!NOTE]
+  > In this converter, the [lz4](https://github.com/lz4/lz4) library was used to speed up compression and improve its quality.
+  > 
+  > The format has limitations on the size of compressed data!
 
-### Supported compression types
+## How to use?
+  > [!TIP]  
+  > [Гайд по использованию конвертера на Русском](.readme/how_to_use.md)  
+  > [A guide to using the converter in English](.readme/how_to_use_en.md)  
 
-- `0` - `none` - There is no compression at all.
-- `1` - `LZ4HC` - Stronger and slower than LZ4.
-- `2` - `LZ4` - Less strong and faster than LZ4HC.
-- `3` - `RFC1951` - Compression is not used in the game. (The format is cut out.)
+## Supported compression types
 
-### Console Output
+  > [!NOTE]  
+  > `0` - `none` - There is no compression at all.  
+  > `1` - `lz4hc` - Stronger and slower than lz4.  
+  > `2` - `lz4` - Less strong and faster than lz4hc.  
+
+## CMD
 
 ```cmd
 R:\Github\dvpl_go>dvpl.exe -h
@@ -68,7 +67,7 @@ Examples:
   Compression: dvpl -c -i ./input_dir -compress 2
 ```
 
-### Command Descriptions
+## Command Descriptions
 - `-c` - Compress files into `.dvpl`.
 - `-d` - Decompress `.dvpl` files.
 - `-i` - Input directory or file.
@@ -96,48 +95,40 @@ Examples:
     - `image_[xyz].png` — Ignore files `image_x.png`, `image_y.png`, `image_z.png`.
 
     #### The contents of the .dvpl_go.yml:
-        compress: 1
-        keepOriginal: false
-        inputPath: "./input_dir"
-        outputPath: "./output_dir"
-        compressFlag: false
-        decompressFlag: false
-        forcedCompress: false
-        maxWorkers: 2
-        ignorePatterns:
-        - "*.exe"
-        - "*.dll"
-        - "*.pdb"
-        - "*.pak"
-        - "temp*"
-        filterPatterns:
-        - "*.sc2"
-        - "*.scg"
-        ignoreCompress:
-        - "*.webp"
-        skipCRC: false
+```yaml
+compress: 1
+keepOriginal: false
+inputPath: "./input_dir"
+outputPath: "./output_dir"
+compressFlag: false
+decompressFlag: false
+forcedCompress: false
+maxWorkers: 2
+ignorePatterns:
+- "*.exe"
+- "*.dll"
+- "*.pdb"
+- "*.pak"
+- "temp*"
+filterPatterns:
+- "*.sc2"
+- "*.scg"
+ignoreCompress:
+- "*.webp"
+skipCRC: false
+```
 
 - `-m` is the maximum number of parallel handlers (workers).
     - Default: 1 (single-threaded mode)
     - Optimal value: 2-4 (depends on CPU)
     - When values > maximum are specified, it is automatically adjusted.
     - The maximum number depends on the cores and threads of the processor.
-> [!WARNING]
+> [!WARNING]  
 > **There may be problems with multithreaded mode running on energy-efficient cores from Intel.**
 
 - `-skip-crc` - When unpacking, the CRC will be ignored.
 
 ## Comparison of operation speed and compression
-
-### This converter is on GoLang
-```cmd
-Start:     16:2:41.15
-The end:   16:3:17.60
------------------
-Total: 0 h 0 min 36.45 sec
-
-Weight: 1.15 GB (1,244,843,076 bytes)
-```
 
 ### This converter is for GoLang with multithreading (2 workers)
 ```cmd
@@ -169,5 +160,5 @@ Total: 0 h 0 min 6.23 sec
 Weight: 2.81 GB (3,020,488,406 bytes)
 ```
 
-### Results
-- This converter is the best option at the moment. It allows you to select the compression level, which directly affects the speed of file compression and supports multithreaded mode. In the lz4hc compression mode, it surpasses its classmates in speed and is not inferior in compression quality. Another GoLang converter used `lz4`, which compresses worse, but faster (it was impossible to change the compression mode). The same converter is fast and supports all available methods.
+## Results
+This converter offers the best compression and speed. It allows you to choose the compression level, which directly impacts file compression speed, and supports multithreaded mode. In lz4hc compression mode, it outperforms its peers in speed and maintains the same compression quality. Another GoLang converter used lz4, which compresses significantly worse, but is faster (it was impossible to change the compression mode). This converter works quickly and supports all the main available methods.
