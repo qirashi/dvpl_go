@@ -319,17 +319,16 @@ func readConfig() *Config {
 	}
 
 	configPath := filepath.Join(filepath.Dir(exePath), ".dvpl_go.yml")
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			fmt.Printf("[error] Error reading config file: %v\n", err)
+		}
 		return nil
 	}
 
 	fmt.Println("[debug] Configuration loaded: .dvpl_go.yml")
-
-	data, err := os.ReadFile(configPath)
-	if err != nil {
-		fmt.Printf("[error] Error reading config file: %v\n", err)
-		return nil
-	}
 
 	var config Config
 	if err := yaml.Unmarshal(data, &config); err != nil {
