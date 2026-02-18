@@ -14,14 +14,11 @@ package dvpl_c
 import "C"
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"unsafe"
 
-	"github.com/klauspost/crc32" // Замена "hash/crc32"
-	// "compress/zlib"
-	// "io"
+	"github.com/klauspost/crc32"
 )
 
 var Marker = [4]byte{'D', 'V', 'P', 'L'}
@@ -104,23 +101,6 @@ func Pack(data []byte, compressType int, forcedCompress bool, skipCRC bool) ([]b
 			result = compressed
 			ptype = 2
 		}
-	// case 3: // rfc1951 (zlib)
-	// var compressed bytes.Buffer
-	// writer := zlib.NewWriter(&compressed)
-	// if _, err := writer.Write(data); err != nil {
-	// return result, ptype, fmt.Errorf("failed to compress data with zlib: %v", err)
-	// }
-	// if err := writer.Close(); err != nil {
-	// return result, ptype, fmt.Errorf("failed to close zlib writer: %v", err)
-	// }
-
-	// if !forcedCompress && compressed.Len() >= lenData {
-	// result = data
-	// ptype = 0 // Без сжатия
-	// } else {
-	// result = compressed.Bytes()
-	// ptype = 3 // rfc1951
-	// }
 	default:
 		return result, ptype, fmt.Errorf("unsupported compression type: %d", compressType)
 	}
@@ -142,12 +122,14 @@ func Pack(data []byte, compressType int, forcedCompress bool, skipCRC bool) ([]b
 		Marker:   Marker,
 	}
 
-	// Добавляем футер к результату
-	var footerBuf bytes.Buffer
-	if err := binary.Write(&footerBuf, binary.LittleEndian, footer); err != nil {
-		return result, ptype, fmt.Errorf("failed to write footer: %v", err)
-	}
-	result = append(result, footerBuf.Bytes()...)
+	const footerSize = 20 // Unpacked(4) + Packed(4) + CRC(4) + PType(4) + Marker(4)
+	footerBytes := make([]byte, footerSize)
+	binary.LittleEndian.PutUint32(footerBytes[0:4], footer.Unpacked)
+	binary.LittleEndian.PutUint32(footerBytes[4:8], footer.Packed)
+	binary.LittleEndian.PutUint32(footerBytes[8:12], footer.CRC)
+	binary.LittleEndian.PutUint32(footerBytes[12:16], footer.PType)
+	copy(footerBytes[16:20], footer.Marker[:])
+	result = append(result, footerBytes...)
 
 	return result, ptype, nil
 }
@@ -187,18 +169,6 @@ func Unpack(data []byte, skipCRC bool) ([]byte, uint32, error) {
 		if err != nil {
 			return nil, ptype, fmt.Errorf("failed to decompress LZ4 data: %v", err)
 		}
-	// case 3: // rfc1951
-	// var reader io.ReadCloser
-	// reader, err = zlib.NewReader(bytes.NewReader(data))
-	// if err != nil {
-	// return nil, footer.PType, fmt.Errorf("failed to create zlib reader: %v", err)
-	// }
-	// defer reader.Close()
-	// result, err = io.ReadAll(reader)
-	// if err != nil {
-	// return nil, footer.PType, fmt.Errorf("[failed to decompress zlib data: %v", err)
-	// }
-
 	default:
 		return nil, ptype, fmt.Errorf("unsupported compression type: %d", ptype)
 	}

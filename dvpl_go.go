@@ -22,7 +22,7 @@ import (
 
 const (
 	DvplExt = ".dvpl"
-	DpvlInf = "dvpl_go 1.4.0 x64 | Copyright (c) 2026 Qirashi"
+	DpvlInf = "dvpl_go 1.4.1 x64 | Copyright (c) 2026 Qirashi"
 )
 
 type Config struct {
@@ -410,7 +410,7 @@ func processFiles(inputPath, outputPath string,
 	errorsCh := make(chan error, maxWorkers*2)
 	var wg sync.WaitGroup
 
-	for i := 0; i < maxWorkers; i++ {
+	for range maxWorkers {
 		wg.Add(1)
 		go worker(tasks, errorsCh, &wg)
 	}
@@ -418,15 +418,13 @@ func processFiles(inputPath, outputPath string,
 	var errList []error
 	var errMu sync.Mutex
 	var collectWg sync.WaitGroup
-	collectWg.Add(1)
-	go func() {
-		defer collectWg.Done()
+	collectWg.Go(func() {
 		for err := range errorsCh {
 			errMu.Lock()
 			errList = append(errList, err)
 			errMu.Unlock()
 		}
-	}()
+	})
 
 	effectiveCompress := func(name string) int {
 		if matchesAnyPattern(name, ignoreCompressPatterns) {
