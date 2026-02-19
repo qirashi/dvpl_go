@@ -26,17 +26,17 @@ const (
 )
 
 func main() {
-	compressFlag := flag.Bool("c", false, "Compress .dvpl files")
-	decompressFlag := flag.Bool("d", false, "Decompress .dvpl files")
-	inputPath := flag.String("i", "", "Input path (file or directory)")
-	outputPath := flag.String("o", "", "Output path (file or directory)")
-	keepOriginal := flag.Bool("keep-original", false, "Keep original files")
+	compressFlag := flag.Bool("c", false, "Compress .dvpl files.")
+	decompressFlag := flag.Bool("d", false, "Decompress .dvpl files.")
+	inputPath := flag.String("i", "", "Input path. (file or directory)")
+	outputPath := flag.String("o", "", "Output path. (file or directory)")
+	keepOriginal := flag.Bool("keep-original", false, "Keep original files.")
 	compressType := flag.Int("compress", 1, "Compression type: 0 (none), 1 (lz4hc), 2 (lz4) |")
-	ignorePatterns := flag.String("ignore", "", "Comma-separated list of file patterns to ignore")
-	filterPatterns := flag.String("filter", "", "Comma-separated list of file patterns to include (e.g. \"*.sc2,*.scg\")")
-	ignoreCompressPatterns := flag.String("ignore-compress", "", "Comma-separated list of file patterns to force no compression (type 0)")
-	forcedCompress := flag.Bool("forced-compress", false, "Forced compression, even if the result is larger than the original")
-	maxWorkers := flag.Int("m", 2, fmt.Sprintf("Maximum number of parallel workers (%d). Minimum 1, recommended 2.", runtime.NumCPU()))
+	ignorePatterns := flag.String("ignore", "", "List of file patterns to ignore. (\"*.exe,*.dll\")")
+	filterPatterns := flag.String("filter", "", "List of file patterns to include. (\"*.sc2,*.scg\")")
+	ignoreCompressPatterns := flag.String("ignore-compress", "", "List of file patterns for which compression should be disabled. (\"*.webp\")")
+	forcedCompress := flag.Bool("forced-compress", false, "Force compression even if the result is larger than the original.")
+	maxWorkers := flag.Int("m", 2, fmt.Sprintf("Maximum number of parallel workers (%d). Minimum 1, recommended 2 |", runtime.NumCPU()))
 	skipCRC := flag.Bool("skip-crc", false, "CRC can be ignored when unpacking or packing.")
 
 	flag.Usage = func() {
@@ -44,12 +44,12 @@ func main() {
 		flag.PrintDefaults()
 		fmt.Println(`
 Examples:
-  Compress   : dvpl -c -i ./input_dir -o ./output_dir
-  Decompress : dvpl -d -i ./input_dir -o ./output_dir
-  Ignore     : dvpl -c -i ./input_dir -ignore "*.exe,*.dll"
-  Filter     : dvpl -d -i ./input_dir -o ./output_dir -filter "*.sc2,*.scg"
-  No compress: dvpl -c -i ./input_dir -ignore-compress "*.webp"
-  Compression: dvpl -c -i ./input_dir -compress 2`)
+  Compress   : dvpl -c -i ./in_dir -o ./out_dir
+  Decompress : dvpl -d -i ./in_dir -o ./out_dir
+  Ignore     : dvpl -c -i ./in_dir -ignore "*.exe,*.dll"
+  Filter     : dvpl -d -i ./in_dir -o ./out_dir -filter "*.sc2,*.scg"
+  No compress: dvpl -c -i ./in_dir -ignore-compress "*.webp"
+  Compression: dvpl -c -i ./in_dir -compress 2`)
 	}
 
 	if envMaxWorkers := os.Getenv("DVPL_MAX_WORKERS"); envMaxWorkers != "" {
@@ -204,7 +204,13 @@ func Unpack(inputPath, outputPath string, _ int, _ bool, skipCRC bool) error {
 
 func matchesAnyPattern(name string, patterns []string) bool {
 	for _, p := range patterns {
-		if matched, _ := filepath.Match(strings.TrimSpace(p), name); matched {
+		if p = strings.TrimSpace(p); p == "" {
+			continue
+		}
+
+		if ok, err := filepath.Match(p, name); err != nil {
+			fmt.Printf("[info] invalid pattern %q: %v\n", p, err)
+		} else if ok {
 			return true
 		}
 	}
@@ -366,12 +372,12 @@ type task struct {
 
 func worker(tasks <-chan task, errors chan<- error, wg *sync.WaitGroup) {
 	defer wg.Done()
-	for task := range tasks {
-		if err := task.processor(task.path, task.outPath, task.compressType, task.forcedCompress, task.skipCRC); err != nil {
-			errors <- fmt.Errorf("processing file %s: %v", task.path, err)
-		} else if !task.keepOriginal {
-			if err := os.Remove(task.path); err != nil {
-				errors <- fmt.Errorf("removing original file %s: %v", task.path, err)
+	for tsk := range tasks {
+		if err := tsk.processor(tsk.path, tsk.outPath, tsk.compressType, tsk.forcedCompress, tsk.skipCRC); err != nil {
+			errors <- fmt.Errorf("processing file %s: %v", tsk.path, err)
+		} else if !tsk.keepOriginal {
+			if err := os.Remove(tsk.path); err != nil {
+				errors <- fmt.Errorf("removing original file %s: %v", tsk.path, err)
 			}
 		}
 	}
