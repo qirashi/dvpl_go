@@ -30,7 +30,7 @@
 R:\Github\dvpl_go>dvpl.exe -h
 [debug] Configuration loaded: .dvpl_go.yml
 
-dvpl_go 1.4.0 x64 | Copyright (c) 2026 Qirashi
+dvpl_go 1.4.1 x64 | Copyright (c) 2026 Qirashi
 
 Usage: dvpl [options]
 [Options]:
