@@ -18,19 +18,46 @@
   > [A guide to using the converter in English](.readme/how_to_use_en.md)  
 
 ## Supported compression types
-
   > [!NOTE]  
-  > `0` - `none` - There is no compression at all.  
-  > `1` - `lz4hc` - Stronger and slower than lz4.  
-  > `2` - `lz4` - Less strong and faster than lz4hc.  
+  > | Type |   Title  |            Description                   |
+  > |------|----------|------------------------------------------|
+  > |  0   |   none   | There is no compression at all.          |
+  > |  1   |   lz4hc  | Stronger and slower than lz4.            |
+  > |  2   |   lz4    | Less strong and faster than lz4hc.       |
+
+## Environment Variables
+  Environment variables can store two converter settings, `DVPL_MAX_WORKERS` and `DVPL_COMPRESS_TYPE`, to specify the number of parallel running processes and the compression type, respectively.
+
+- `DVPL_MAX_WORKERS` — Maximum number of parallel workers. (If the number is too large, it will be limited.)
+- `DVPL_COMPRESS_TYPE` — Specifies the compression level from 0 to 2. (If the type does not exist, an error will occur.)
+
+How to set variables:
+1. **Create manually**
+    - Press `Win+R`.
+    - Run `SystemPropertiesAdvanced`.
+    - Open `Environment Variables` and create the appropriate variables.
+
+2. **Via the command line**
+    - `Win` → `cmd` → `right-click` → `Run as administrator`.
+    - Insert one of the commands:
+      *   For a single user:
+            ```cmd
+            setx DVPL_MAX_WORKERS 4
+            setx DVPL_COMPRESS_TYPE 1
+            ```
+
+      *   For all users (with admin):
+            ```cmd
+            setx DVPL_MAX_WORKERS 4 /M
+            setx DVPL_COMPRESS_TYPE 1 /M
+            ```
 
 ## CMD
 
 ```cmd
-R:\Github\dvpl_go>dvpl.exe -h
-[debug] Configuration loaded: .dvpl_go.yml
+R:\Github\dvpl_go\out>dvpl.exe -h
 
-dvpl_go 1.4.0 x64 | Copyright (c) 2026 Qirashi
+dvpl_go 2.0.0 x64 | Copyright (c) 2026 Qirashi
 
 Usage: dvpl [options]
 [Options]:
@@ -51,7 +78,7 @@ Usage: dvpl [options]
   -keep-original
         Keep original files
   -m int
-        Maximum number of parallel workers (12). Minimum 1, recommended 2. (default 1)
+        Maximum number of parallel workers (12). Minimum 1, recommended 2. (default 2)
   -o string
         Output path (file or directory)
   -skip-crc
@@ -66,71 +93,45 @@ Examples:
   Compression: dvpl -c -i ./input_dir -compress 2
 ```
 
-## Command Descriptions
-- `-c` - Compress files into `.dvpl`.
-- `-d` - Decompress `.dvpl` files.
-- `-i` - Input directory or file.
-- `-o` - Output directory or file.
-- `-keep-original` - Keep the original file during decompression or compression.
-- `-compress` - Specifies the compression level from 0 to 2.
-    - `0` - `none`
-    - `1` - `lz4hc`
-    - `2` - `lz4`
-- `-ignore` is a list of file templates that should be ignored. (Files and extensions will not be processed)
-- `-ignore-compress` - A list of file templates that will be forcibly compressed to type 0. (For example, `*.webp')
-- `-filter` - A list of template files to be processed. (Only files and extensions that will be processed are the reverse of `-ignore`)
+### Command Descriptions
+- `-c` — Compress to `.dvpl`.
+- `-d` — Decompress `.dvpl`.
+- `-i` — Input directory or file.
+- `-o` — Output directory or file.
+- `-keep-original` — Keep the original file during decompression or compression.
+- `-compress` — Specifies the compression level from 0 to 2.
+    - `0` — `none`
+    - `1` — `lz4hc`
+    - `2` — `lz4`
+- `-ignore` — List of file patterns to ignore. (Files and extensions will not be processed)
+- `-ignore-compress` — A list of file templates that will be forcibly compressed to type 0. (For example, `*.webp`)
+- `-filter` — A list of template files to be processed. (Only files and extensions that will be processed are the reverse of `-ignore`)
     - For example, you need to unpack only `*.webp` and `*.txt` into a separate folder.
     - It will look like this: `dvpl -d -i ./in -o ./out -filter "*.webp,*.txt" -keep-original -m 4`
-    #### Supported wildcard characters:
+    #### Wildcards for filters:
     - `*` — Any number of characters (except `/`).
     - `?` — One character.
     - `[abc]` — One of the specified characters.
 
-    #### Usage Examples:
+    #### Examples:
     - `*.exe` — Ignore all `.exe` files.
     - `file?.log` — Ignore files like `file1.log`, `file2.log`.
     - `folder/*.txt` — Ignore all `.txt` files in the `folder` directory.
     - `data[1-3].csv` — Ignore files `data1.csv`, `data2.csv`, `data3.csv`.
     - `image_[xyz].png` — Ignore files `image_x.png`, `image_y.png`, `image_z.png`.
 
-    #### The contents of the .dvpl_go.yml:
-```yaml
-compress: 1
-keepOriginal: false
-inputPath: "./input_dir"
-outputPath: "./output_dir"
-compressFlag: false
-decompressFlag: false
-forcedCompress: false
-maxWorkers: 2
-ignorePatterns:
-- "*.exe"
-- "*.dll"
-- "*.pdb"
-- "*.pak"
-- "temp*"
-filterPatterns:
-- "*.sc2"
-- "*.scg"
-ignoreCompress:
-- "*.webp"
-skipCRC: false
-```
-
 - `-m` is the maximum number of parallel handlers (workers).
-    - Default: 1 (single-threaded mode)
+    - Default: 2 (single-threaded mode)
     - Optimal value: 2-4 (depends on CPU)
     - When values > maximum are specified, it is automatically adjusted.
     - The maximum number depends on the cores and threads of the processor.
-> [!WARNING]  
-> **There may be problems with multithreaded mode running on energy-efficient cores from Intel.**
 
 - `-skip-crc` - When unpacking, the CRC will be ignored.
 
-## Comparison of operation speed and compression
+## Comparison of operating speed
 
 ### This converter is for GoLang with multithreading (2 workers)
-```cmd
+```
 Start:     16:4:43.85
 The end:   16:5:2.78
 -----------------
@@ -140,7 +141,7 @@ Weight: 1.15 GB (1,244,843,076 bytes)
 ```
 
 ### Another NodeJS converter
-```cmd
+```
 Start:     15:59:13.41
 The end:   16:0:10.19
 -----------------
@@ -150,7 +151,7 @@ Weight: 1.15 GB (1,243,007,962 bytes)
 ```
 
 ### Another converter for GoLang
-```cmd
+```
 Start:     16:18:37.28
 The end:   16:18:43.51
 -----------------
@@ -160,4 +161,4 @@ Weight: 2.81 GB (3,020,488,406 bytes)
 ```
 
 ## Results
-This converter offers the best compression and speed. It allows you to choose the compression level, which directly impacts file compression speed, and supports multithreaded mode. In lz4hc compression mode, it outperforms its peers in speed and maintains the same compression quality. Another GoLang converter used lz4, which compresses significantly worse, but is faster (it was impossible to change the compression mode). This converter works quickly and supports all the main available methods.
+  This converter offers optimal compression and speed. It allows you to choose the compression level, which affects speed. In the `lz4hc` compression mode, it outperforms its classmates in speed and is equally high-quality. Another converter in Go used `lz4`, which offers worse compression but is faster. This converter is fast and supports all the main available methods.

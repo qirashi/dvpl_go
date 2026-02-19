@@ -19,10 +19,6 @@ NOTICE File for dvpl_go
     License: BSD‑style (or relevant license)
     Repository: https://github.com/klauspost/crc32
 
-    5) gopkg.in/yaml.v3
-    License: MIT (or relevant license)
-    Repository: https://gopkg.in/yaml.v3
-
     NOTES:
     * The full text of each third‑party license may be found in the source code
     repositories listed above, or in a bundled `licenses` directory if you include
