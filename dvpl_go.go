@@ -37,7 +37,7 @@ func main() {
 	ignoreCompressPatterns := flag.String("ignore-compress", "", "Comma-separated list of file patterns to force no compression (type 0)")
 	forcedCompress := flag.Bool("forced-compress", false, "Forced compression, even if the result is larger than the original")
 	maxWorkers := flag.Int("m", 2, fmt.Sprintf("Maximum number of parallel workers (%d). Minimum 1, recommended 2.", runtime.NumCPU()))
-	skipCRC := flag.Bool("skip-crc", false, "When unpacking, the crc will be ignored.")
+	skipCRC := flag.Bool("skip-crc", false, "CRC can be ignored when unpacking or packing.")
 
 	flag.Usage = func() {
 		fmt.Printf("\n%s\n\nUsage: dvpl [options]\n[Options]:\n", DpvlInf)
