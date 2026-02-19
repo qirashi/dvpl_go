@@ -82,7 +82,7 @@ Usage: dvpl [options]
   -o string
         Output path (file or directory)
   -skip-crc
-        When unpacking, the crc will be ignored.
+        CRC can be ignored when unpacking or packing.
 
 Examples:
   Compress   : dvpl -c -i ./input_dir -o ./output_dir
