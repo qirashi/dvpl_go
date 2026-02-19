@@ -61,36 +61,36 @@ dvpl_go 2.0.0 x64 | Copyright (c) 2026 Qirashi
 
 Usage: dvpl [options]
 [Options]:
-  -c    Compress .dvpl files
+  -c    Compress .dvpl files.
   -compress int
         Compression type: 0 (none), 1 (lz4hc), 2 (lz4) | (default 1)
-  -d    Decompress .dvpl files
+  -d    Decompress .dvpl files.
   -filter string
-        Comma-separated list of file patterns to include (e.g. "*.sc2,*.scg")
+        List of file patterns to include. ("*.sc2,*.scg")
   -forced-compress
-        Forced compression, even if the result is larger than the original
+        Force compression even if the result is larger than the original.
   -i string
-        Input path (file or directory)
+        Input path. (file or directory)
   -ignore string
-        Comma-separated list of file patterns to ignore
+        List of file patterns to ignore. ("*.exe,*.dll")
   -ignore-compress string
-        Comma-separated list of file patterns to force no compression (type 0)
+        List of file patterns for which compression should be disabled. ("*.webp")
   -keep-original
-        Keep original files
+        Keep original files.
   -m int
-        Maximum number of parallel workers (12). Minimum 1, recommended 2. (default 2)
+        Maximum number of parallel workers (12). Minimum 1, recommended 2 | (default 2)
   -o string
-        Output path (file or directory)
+        Output path. (file or directory)
   -skip-crc
         CRC can be ignored when unpacking or packing.
 
 Examples:
-  Compress   : dvpl -c -i ./input_dir -o ./output_dir
-  Decompress : dvpl -d -i ./input_dir -o ./output_dir
-  Ignore     : dvpl -c -i ./input_dir -ignore "*.exe,*.dll"
-  Filter     : dvpl -d -i ./input_dir -o ./output_dir -filter "*.sc2,*.scg"
-  No compress: dvpl -c -i ./input_dir -ignore-compress "*.webp"
-  Compression: dvpl -c -i ./input_dir -compress 2
+  Compress   : dvpl -c -i ./in_dir -o ./out_dir
+  Decompress : dvpl -d -i ./in_dir -o ./out_dir
+  Ignore     : dvpl -c -i ./in_dir -ignore "*.exe,*.dll"
+  Filter     : dvpl -d -i ./in_dir -o ./out_dir -filter "*.sc2,*.scg"
+  No compress: dvpl -c -i ./in_dir -ignore-compress "*.webp"
+  Compression: dvpl -c -i ./in_dir -compress 2
 ```
 
 ### Command Descriptions
