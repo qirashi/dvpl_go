@@ -46,12 +46,6 @@
             setx DVPL_COMPRESS_TYPE 1
             ```
 
-      *   Для всех пользователей (с админом):
-            ```cmd
-            setx DVPL_MAX_WORKERS 4 /M
-            setx DVPL_COMPRESS_TYPE 1 /M
-            ```
-
 ## CMD
 
 ```cmd

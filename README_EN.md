@@ -46,12 +46,6 @@ How to set variables:
             setx DVPL_COMPRESS_TYPE 1
             ```
 
-      *   For all users (with admin):
-            ```cmd
-            setx DVPL_MAX_WORKERS 4 /M
-            setx DVPL_COMPRESS_TYPE 1 /M
-            ```
-
 ## CMD
 
 ```cmd
