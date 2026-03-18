@@ -1,53 +1,46 @@
-# dvpl_go [BACK](./../README_EN.md)
+# dvpl_go [BACK](./../README.md)
 
 ## Description
 
-The **dvpl_go** utility allows you to work with files in the DVPL format. It can be used in two modes:
+**dvpl_go** is a utility for working with DVPL format files. It can be used in three modes:
 
-1. **Full Installation**: After installation, the utility integrates into the operating system's context menu, enabling quick access for selected files or folders (see screenshot below).
+1. **Full installation**: After installation, the utility integrates into the operating system's context menu, allowing quick access for selected files or folders (see screenshot below).
 
-2. **Manual Launch**: The converter can be placed in any folder and run directly from there. In this case, two modes are available:
-   - Compressing files into the DVPL format.
-   - Decompressing files from the DVPL format.
+2. **Manual launch**: You can place the converter in any folder and run it directly from there. Two operation modes are available:
+   - Compress files to DVPL format
+   - Decompress files from DVPL format
 
-3. **Drag & Drop**: The converter compresses or decompresses files transferred to the executable file.
+3. **Drag & Drop**: Drag and drop files onto the `dvpl.exe` executable for quick compression or decompression.
 
 ## Installation
 
-### Full Installation
-1. Run the installer from `Releases`.
-2. Follow the installer's instructions.
-3. Choose the option to integrate the utility into the context menu (recommended for ease of use).
+### Full installation
+1. Run the installer from the **Releases** section
+2. Follow the installer instructions
+3. Choose the context menu integration option (recommended for ease of use)
 
-  Once the installation is complete, you can use the utility via the context menu, as shown in the screenshot.
+After installation, you can use the utility via the context menu as shown in the screenshot.
 
-### Manual Installation
-1. Download the archive for your architecture from the **Releases** section.
-2. Extract the contents of the archive into any convenient folder (e.g., the desktop).
-3. Use the utility directly from this folder.
+### Manual installation
+1. Download the archive for your architecture from the **Releases** section
+2. Extract the contents to any convenient folder (e.g., desktop)
+3. Use the utility directly from that folder
 
 ## Usage
 
-### Via Context Menu
-1. Select the file or folder you want to process.
-2. Right-click and choose the appropriate menu option (compress or decompress).
-3. Use the utility directly from the folder or using Drag & Drop.
+### Via context menu
+1. Select a file or folder to process
+2. Right-click and choose the appropriate menu item (compress or decompress)
+3. The utility will automatically perform the required actions
 
 ![Context menu example](screenshot.png)  
-_Example of utility integration in the context menu_
+_Context menu integration_
 
-### Via Manual Launch
-1. Place the `dvpl.exe` file in the target folder with the files you want to process.
-2. Launch the utility in one of the following ways:
-   - For **compression**: Drag and drop a file or folder onto the `dvpl.exe` executable.
-   - For **decompression**: Run the utility from the command line with the appropriate parameters (see the documentation inside the archive for details).
+### Via manual launch
+1. Place `dvpl.exe` in the folder with your target files
+2. Launch the utility using one of these methods:
+   - For compression: drag and drop files onto `dvpl.exe`
+   - For decompression: use the command line (see `dvpl.exe -h` for details)
 
-![Example of direct program launch](screenshot_2.png)  
-_Example of utility integration in the context menu_
-
-### Drag & Drop.
-1. Drag and drop one or more files onto `dvpl.exe`.
-
-## Notes
-- If you use the utility without installation, ensure it is located in the same folder as the target files or specify the correct path to them.
-- For additional information on command-line parameters, refer to the documentation inside the `dvpl_go.zip` archive.
+![Manual launch example](screenshot_2.png)  
+_Regular program launch_

@@ -25,7 +25,7 @@
   > |  1   |   lz4hc  | Stronger and slower than lz4.            |
   > |  2   |   lz4    | Less strong and faster than lz4hc.       |
 
-## Environment Variables
+## Environment variables
   Environment variables can store two converter settings, `DVPL_MAX_WORKERS` and `DVPL_COMPRESS_TYPE`, to specify the number of parallel running processes and the compression type, respectively.
 
 - `DVPL_MAX_WORKERS` — Maximum number of parallel workers. (If the number is too large, it will be limited.)
@@ -45,6 +45,10 @@ How to set variables:
             setx DVPL_MAX_WORKERS 4
             setx DVPL_COMPRESS_TYPE 1
             ```
+
+3. **Use set_env_variables.bat**
+    - Download `set_env_variables.bat` from the repository and run it.
+    - Use internal functions for configuration.
 
 ## CMD
 
@@ -124,7 +128,7 @@ Examples:
 
 ## Comparison of operating speed
 
-### This converter is for GoLang with multithreading (2 workers)
+### This GoLang converter with multithreading (2 workers)
 ```
 Start:     16:4:43.85
 The end:   16:5:2.78
@@ -144,7 +148,7 @@ Total: 0 h 0 min 56.78 sec
 Weight: 1.15 GB (1,243,007,962 bytes)
 ```
 
-### Another converter for GoLang
+### Another GoLang converter
 ```
 Start:     16:18:37.28
 The end:   16:18:43.51
@@ -155,4 +159,4 @@ Weight: 2.81 GB (3,020,488,406 bytes)
 ```
 
 ## Results
-  This converter offers optimal compression and speed. It allows you to choose the compression level, which affects speed. In the `lz4hc` compression mode, it outperforms its classmates in speed and is equally high-quality. Another converter in Go used `lz4`, which offers worse compression but is faster. This converter is fast and supports all the main available methods.
+  This converter offers optimal compression and speed. It allows you to choose the compression level, which affects speed. In the lz4hc compression mode, it outperforms its competitors in speed and maintains the same compression quality. Another Go converter uses lz4, which offers worse compression but is faster. This converter is fast and supports all major available methods.
