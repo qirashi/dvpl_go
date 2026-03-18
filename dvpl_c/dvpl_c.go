@@ -21,7 +21,7 @@ import (
 	"github.com/klauspost/crc32"
 )
 
-var Marker = [4]byte{'D', 'V', 'P', 'L'}
+var dvplMarker = [4]byte{'D', 'V', 'P', 'L'}
 
 func compressLZ4(data []byte, level int) ([]byte, error) {
 	bound := int(C.LZ4_compressBound(C.int(len(data))))
@@ -72,11 +72,11 @@ func Pack(data []byte, compressType int, forcedCompress bool, skipCRC bool) ([]b
 	var ptype uint32
 
 	switch compressType {
-	case 0: // none
+	case 0: // NONE
 		result = data
 		ptype = 0
 	case 1: // LZ4 HC
-		compressed, err := compressLZ4(data, 9) // Уровень 9 для HC
+		compressed, err := compressLZ4(data, 9)
 		if err != nil {
 			return result, ptype, fmt.Errorf("failed to compress data: %v", err)
 		}
@@ -89,7 +89,7 @@ func Pack(data []byte, compressType int, forcedCompress bool, skipCRC bool) ([]b
 			ptype = 1
 		}
 	case 2: // LZ4
-		compressed, err := compressLZ4(data, 0) // Уровень 0 для обычного LZ4
+		compressed, err := compressLZ4(data, 0)
 		if err != nil {
 			return result, ptype, fmt.Errorf("failed to compress data: %v", err)
 		}
@@ -119,7 +119,7 @@ func Pack(data []byte, compressType int, forcedCompress bool, skipCRC bool) ([]b
 		Packed:   packed,
 		CRC:      crc,
 		PType:    ptype,
-		Marker:   Marker,
+		Marker:   dvplMarker,
 	}
 
 	const footerSize = 20 // Unpacked(4) + Packed(4) + CRC(4) + PType(4) + Marker(4)
@@ -150,7 +150,7 @@ func Unpack(data []byte, skipCRC bool) ([]byte, uint32, error) {
 	var marker [4]byte
 	copy(marker[:], footerBytes[16:20])
 
-	if marker != Marker {
+	if marker != dvplMarker {
 		return nil, ptype, fmt.Errorf("invalid marker: %v", marker)
 	}
 
@@ -162,7 +162,7 @@ func Unpack(data []byte, skipCRC bool) ([]byte, uint32, error) {
 	var err error
 
 	switch ptype {
-	case 0: // none
+	case 0: // NONE
 		result = data
 	case 1, 2: // LZ4
 		result, err = decompressLZ4(data, int(unpacked))

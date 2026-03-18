@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	DvplExt = ".dvpl"
-	DpvlInf = "dvpl_go 2.0.0 x64 | Copyright (c) 2026 Qirashi"
+	dvplExt = ".dvpl"
+	dpvlInf = "dvpl_go 2.0.2 x64 | Copyright (c) 2026 Qirashi"
 )
 
 func main() {
@@ -40,28 +40,26 @@ func main() {
 	skipCRC := flag.Bool("skip-crc", false, "CRC can be ignored when unpacking or packing.")
 
 	flag.Usage = func() {
-		fmt.Printf("\n%s\n\nUsage: dvpl [options]\n[Options]:\n", DpvlInf)
+		fmt.Printf("\n%s\n\nUsage: dvpl [options]\n[Options]:\n", dpvlInf)
 		flag.PrintDefaults()
 		fmt.Println(`
 Examples:
-  Compress   : dvpl -c -i ./in_dir -o ./out_dir
-  Decompress : dvpl -d -i ./in_dir -o ./out_dir
-  Ignore     : dvpl -c -i ./in_dir -ignore "*.exe,*.dll"
-  Filter     : dvpl -d -i ./in_dir -o ./out_dir -filter "*.sc2,*.scg"
-  No compress: dvpl -c -i ./in_dir -ignore-compress "*.webp"
-  Compression: dvpl -c -i ./in_dir -compress 2`)
+	Compress   : dvpl -c -i ./in_dir -o ./out_dir
+	Decompress : dvpl -d -i ./in_dir -o ./out_dir
+	Filter     : dvpl -d -i ./in_dir -o ./out_dir -filter "*.sc2,*.scg"
+	Ignore     : dvpl -c -i ./in_dir -ignore "*.exe,*.dll"
+	No compress: dvpl -c -i ./in_dir -ignore-compress "*.webp"
+	Compression: dvpl -c -i ./in_dir -compress 1`)
 	}
 
 	if envMaxWorkers := os.Getenv("DVPL_MAX_WORKERS"); envMaxWorkers != "" {
 		if val, err := strconv.Atoi(envMaxWorkers); err == nil {
-			fmt.Println("[info] DVPL_MAX_WORKERS:", val)
 			*maxWorkers = val
 		}
 	}
 
 	if envCompress := os.Getenv("DVPL_COMPRESS_TYPE"); envCompress != "" {
 		if val, err := strconv.Atoi(envCompress); err == nil {
-			fmt.Println("[info] DVPL_COMPRESS_TYPE:", val)
 			*compressType = val
 		}
 	}
@@ -167,7 +165,7 @@ func Pack(inputPath, outputPath string, compressType int, forcedCompress bool, s
 		return fmt.Errorf("failed to create output directory: %v", err)
 	}
 
-	if err := os.WriteFile(outputPath+DvplExt, dvplData, 0644); err != nil {
+	if err := os.WriteFile(outputPath+dvplExt, dvplData, 0644); err != nil {
 		return fmt.Errorf("failed to write output file: %v", err)
 	}
 
@@ -189,7 +187,7 @@ func Unpack(inputPath, outputPath string, _ int, _ bool, skipCRC bool) error {
 
 	fmt.Printf("Unpack [%s]: %s\n", getCompressionTypeString(compressionType), inputPath)
 
-	outputPath = strings.TrimSuffix(outputPath, DvplExt)
+	outputPath = strings.TrimSuffix(outputPath, dvplExt)
 
 	if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
 		return fmt.Errorf("failed to create output directory: %v", err)
@@ -225,11 +223,11 @@ func shouldProcessFile(path string, info os.FileInfo, exeFileName string, compre
 		return false
 	}
 
-	if compressFlag && strings.HasSuffix(name, DvplExt) {
+	if compressFlag && strings.HasSuffix(name, dvplExt) {
 		return false
 	}
 
-	if !compressFlag && !strings.HasSuffix(name, DvplExt) {
+	if !compressFlag && !strings.HasSuffix(name, dvplExt) {
 		return false
 	}
 
@@ -241,7 +239,7 @@ func shouldProcessFile(path string, info os.FileInfo, exeFileName string, compre
 	if len(filterPatterns) > 0 {
 		filterName := name
 		if !compressFlag {
-			filterName = strings.TrimSuffix(name, DvplExt)
+			filterName = strings.TrimSuffix(name, dvplExt)
 		}
 
 		if !matchesAnyPattern(filterName, filterPatterns) {
@@ -391,7 +389,7 @@ func detectDirMode(root string) bool {
 			return nil
 		}
 
-		if strings.HasSuffix(d.Name(), DvplExt) {
+		if strings.HasSuffix(d.Name(), dvplExt) {
 			unpack = true
 			return fmt.Errorf("stop walk")
 		}
@@ -417,7 +415,7 @@ func dragAndDropMode(paths []string, maxWorkers int, compressType int) {
 			continue
 		}
 
-		if strings.HasSuffix(info.Name(), DvplExt) {
+		if strings.HasSuffix(info.Name(), dvplExt) {
 			processFiles(path, path, Unpack, false, false, 0, nil, nil, nil, maxWorkers, false, true)
 		} else {
 			processFiles(path, path, Pack, false, true, compressType, nil, nil, nil, maxWorkers, false, true)
@@ -455,7 +453,7 @@ func interactiveMode(maxWorkers int) {
 	selectedIndex := 0
 
 	for {
-		fmt.Printf("\033[H%s\n\nUsage: dvpl_go [-h] - To get help.\nPress Ctrl+C or Esc to exit.\n\n", DpvlInf)
+		fmt.Printf("\033[H%s\n\nUsage: dvpl_go [-h] - To get help.\nPress Ctrl+C or Esc to exit.\n\n", dpvlInf)
 
 		drawMenu(options, selectedIndex)
 
@@ -515,7 +513,7 @@ func compressInteractive(maxWorkers int) {
 	selectedIndex := 1
 
 	for {
-		fmt.Printf("\033[H%s\n\nSelect compression type.\nPress Ctrl+C or Esc to exit.\n\n", DpvlInf)
+		fmt.Printf("\033[H%s\n\nSelect compression type.\nPress Ctrl+C or Esc to exit.\n\n", dpvlInf)
 
 		drawMenu(options, selectedIndex)
 
