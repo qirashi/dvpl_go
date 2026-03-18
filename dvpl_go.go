@@ -22,7 +22,7 @@ import (
 
 const (
 	dvplExt = ".dvpl"
-	dpvlInf = "dvpl_go 2.0.2 x64 | Copyright (c) 2026 Qirashi"
+	dvplInf = "dvpl_go 2.0.2 x64 | Copyright (c) 2026 Qirashi"
 )
 
 func main() {
@@ -40,7 +40,7 @@ func main() {
 	skipCRC := flag.Bool("skip-crc", false, "CRC can be ignored when unpacking or packing.")
 
 	flag.Usage = func() {
-		fmt.Printf("\n%s\n\nUsage: dvpl [options]\n[Options]:\n", dpvlInf)
+		fmt.Printf("\n%s\n\nUsage: dvpl [options]\n[Options]:\n", dvplInf)
 		flag.PrintDefaults()
 		fmt.Println(`
 Examples:
@@ -453,7 +453,7 @@ func interactiveMode(maxWorkers int) {
 	selectedIndex := 0
 
 	for {
-		fmt.Printf("\033[H%s\n\nUsage: dvpl_go [-h] - To get help.\nPress Ctrl+C or Esc to exit.\n\n", dpvlInf)
+		fmt.Printf("\033[H%s\n\nUsage: dvpl_go [-h] - To get help.\nPress Ctrl+C or Esc to exit.\n\n", dvplInf)
 
 		drawMenu(options, selectedIndex)
 
@@ -513,7 +513,7 @@ func compressInteractive(maxWorkers int) {
 	selectedIndex := 1
 
 	for {
-		fmt.Printf("\033[H%s\n\nSelect compression type.\nPress Ctrl+C or Esc to exit.\n\n", dpvlInf)
+		fmt.Printf("\033[H%s\n\nSelect compression type.\nPress Ctrl+C or Esc to exit.\n\n", dvplInf)
 
 		drawMenu(options, selectedIndex)
 
