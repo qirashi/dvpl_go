@@ -136,7 +136,12 @@ func Pack(data []byte, compressType int, forcedCompress bool, skipCRC bool) ([]b
 
 func Unpack(data []byte, skipCRC bool) ([]byte, uint32, error) {
 	lenData := len(data)
+
 	const footerSize = 20 // Unpacked(4) + Packed(4) + CRC(4) + PType(4) + Marker(4)
+	if lenData == footerSize {
+		return []byte{}, 0, nil
+	}
+
 	if lenData < footerSize {
 		return nil, 0, fmt.Errorf("invalid DVPL data: size %d is less than footer size %d", lenData, footerSize)
 	}
@@ -145,13 +150,16 @@ func Unpack(data []byte, skipCRC bool) ([]byte, uint32, error) {
 	data = data[:lenData-footerSize]
 
 	unpacked := binary.LittleEndian.Uint32(footerBytes[0:4])
+	packed := binary.LittleEndian.Uint32(footerBytes[4:8])
 	crc := binary.LittleEndian.Uint32(footerBytes[8:12])
 	ptype := binary.LittleEndian.Uint32(footerBytes[12:16])
-	var marker [4]byte
-	copy(marker[:], footerBytes[16:20])
 
-	if marker != dvplMarker {
-		return nil, ptype, fmt.Errorf("invalid marker: %v", marker)
+	if footerBytes[16] != dvplMarker[0] || footerBytes[17] != dvplMarker[1] || footerBytes[18] != dvplMarker[2] || footerBytes[19] != dvplMarker[3] {
+		return nil, ptype, fmt.Errorf("invalid marker")
+	}
+
+	if uint32(lenData-footerSize) != packed {
+		return nil, ptype, fmt.Errorf("packed size mismatch: got %d, expected %d", len(data), packed)
 	}
 
 	if !skipCRC && crc32.ChecksumIEEE(data) != crc {
