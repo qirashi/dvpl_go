@@ -24,7 +24,9 @@ import (
 var dvplMarker = [4]byte{'D', 'V', 'P', 'L'}
 
 func compressLZ4(data []byte, level int) ([]byte, error) {
-	bound := int(C.LZ4_compressBound(C.int(len(data))))
+	lenData := len(data)
+
+	bound := int(C.LZ4_compressBound(C.int(lenData)))
 	if bound == 0 {
 		return nil, fmt.Errorf("LZ4_compressBound failed")
 	}
@@ -35,9 +37,9 @@ func compressLZ4(data []byte, level int) ([]byte, error) {
 
 	var compressedSize int
 	if level > 0 {
-		compressedSize = int(C.LZ4_compress_HC(src, dst, C.int(len(data)), C.int(bound), C.int(level))) // LZ4 HC
+		compressedSize = int(C.LZ4_compress_HC(src, dst, C.int(lenData), C.int(bound), C.int(level))) // LZ4 HC
 	} else {
-		compressedSize = int(C.LZ4_compress_default(src, dst, C.int(len(data)), C.int(bound))) // LZ4
+		compressedSize = int(C.LZ4_compress_default(src, dst, C.int(lenData), C.int(bound))) // LZ4
 	}
 
 	if compressedSize <= 0 {
@@ -160,10 +162,10 @@ func Unpack(data []byte, trustData bool) ([]byte, uint32, error) {
 	}
 
 	if uint32(payloadSize) != packed {
-		return nil, ptype, fmt.Errorf("packed size mismatch: got %d, expected %d", len(data), packed)
+		return nil, ptype, fmt.Errorf("packed size mismatch: got %d, expected %d", lenData, packed)
 	}
 
-	if !trustData && unpacked > (1 << 30) { // > 1 GB
+	if !trustData && unpacked > (1<<30) { // > 1 GB
 		return nil, ptype, fmt.Errorf("unpacked size too large: %d. Use -trust-data for unpacking.", unpacked)
 	}
 
