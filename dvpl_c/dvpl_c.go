@@ -164,7 +164,7 @@ func Unpack(data []byte, trustData bool) ([]byte, uint32, error) {
 	}
 
 	if !trustData && unpacked > (1 << 30) { // > 1 GB
-		return nil, ptype, fmt.Errorf("unpacked size too large: %d", unpacked)
+		return nil, ptype, fmt.Errorf("unpacked size too large: %d. Use -trust-data for unpacking.", unpacked)
 	}
 
 	if !trustData && crc32.ChecksumIEEE(data) != crc {
