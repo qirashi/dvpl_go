@@ -22,7 +22,7 @@ import (
 
 const (
 	dvplExt = ".dvpl"
-	dvplInf = "dvpl_go 2.0.2 x64 | Copyright (c) 2026 Qirashi"
+	dvplInf = "dvpl_go 2.1.0 x64 | Copyright (c) 2026 Qirashi"
 )
 
 func main() {
@@ -37,19 +37,17 @@ func main() {
 	ignoreCompressPatterns := flag.String("ignore-compress", "", "List of file patterns for which compression should be disabled. (\"*.webp\")")
 	forcedCompress := flag.Bool("forced-compress", false, "Force compression even if the result is larger than the original.")
 	maxWorkers := flag.Int("m", 2, fmt.Sprintf("Maximum number of parallel workers (%d). Minimum 1, recommended 2 |", runtime.NumCPU()))
-	skipCRC := flag.Bool("skip-crc", false, "CRC can be ignored when unpacking or packing.")
+	trustData := flag.Bool("trust-data", false, "CRC and some checks are ignored.")
 
 	flag.Usage = func() {
 		fmt.Printf("\n%s\n\nUsage: dvpl [options]\n[Options]:\n", dvplInf)
 		flag.PrintDefaults()
 		fmt.Println(`
 Examples:
-	Compress   : dvpl -c -i ./in_dir -o ./out_dir
+	Compress   : dvpl -c -i ./in_dir -compress 1
 	Decompress : dvpl -d -i ./in_dir -o ./out_dir
 	Filter     : dvpl -d -i ./in_dir -o ./out_dir -filter "*.sc2,*.scg"
-	Ignore     : dvpl -c -i ./in_dir -ignore "*.exe,*.dll"
-	No compress: dvpl -c -i ./in_dir -ignore-compress "*.webp"
-	Compression: dvpl -c -i ./in_dir -compress 1`)
+	Ignore     : dvpl -c -i ./in_dir -ignore "*.exe,*.dll"`)
 	}
 
 	if envMaxWorkers := os.Getenv("DVPL_MAX_WORKERS"); envMaxWorkers != "" {
@@ -112,9 +110,9 @@ Examples:
 	}
 
 	if *compressFlag {
-		processFiles(*inputPath, *outputPath, Pack, *keepOriginal, *compressFlag, *compressType, ignoreList, ignoreCompressList, filterList, *maxWorkers, *forcedCompress, *skipCRC)
+		processFiles(*inputPath, *outputPath, Pack, *keepOriginal, *compressFlag, *compressType, ignoreList, ignoreCompressList, filterList, *maxWorkers, *forcedCompress, *trustData)
 	} else if *decompressFlag {
-		processFiles(*inputPath, *outputPath, Unpack, *keepOriginal, *compressFlag, *compressType, ignoreList, ignoreCompressList, filterList, *maxWorkers, *forcedCompress, *skipCRC)
+		processFiles(*inputPath, *outputPath, Unpack, *keepOriginal, *compressFlag, *compressType, ignoreList, ignoreCompressList, filterList, *maxWorkers, *forcedCompress, *trustData)
 	}
 }
 
@@ -133,7 +131,7 @@ func getCompressionTypeString(compressionType uint32) string {
 	}
 }
 
-func Pack(inputPath, outputPath string, compressType int, forcedCompress bool, skipCRC bool) error {
+func Pack(inputPath, outputPath string, compressType int, forcedCompress bool, trustData bool) error {
 	fileInfo, err := os.Stat(inputPath)
 	if err != nil {
 		return fmt.Errorf("failed to get file info: %v", err)
@@ -154,7 +152,7 @@ func Pack(inputPath, outputPath string, compressType int, forcedCompress bool, s
 		return fmt.Errorf("failed to read input file: %v", err)
 	}
 
-	dvplData, compressionType, err := dvpl.Pack(data, compressType, forcedCompress, skipCRC)
+	dvplData, compressionType, err := dvpl.Pack(data, compressType, forcedCompress)
 	if err != nil {
 		return fmt.Errorf("failed to pack data: %v", err)
 	}
@@ -172,7 +170,7 @@ func Pack(inputPath, outputPath string, compressType int, forcedCompress bool, s
 	return nil
 }
 
-func Unpack(inputPath, outputPath string, _ int, _ bool, skipCRC bool) error {
+func Unpack(inputPath, outputPath string, _ int, _ bool, trustData bool) error {
 
 	dvplData, err := os.ReadFile(inputPath)
 
@@ -180,7 +178,7 @@ func Unpack(inputPath, outputPath string, _ int, _ bool, skipCRC bool) error {
 		return fmt.Errorf("failed to read input file: %v", err)
 	}
 
-	data, compressionType, err := dvpl.Unpack(dvplData, skipCRC)
+	data, compressionType, err := dvpl.Unpack(dvplData, trustData)
 	if err != nil {
 		return fmt.Errorf("failed to unpack data: %v", err)
 	}
@@ -261,7 +259,7 @@ func processFiles(inputPath, outputPath string,
 	filterPatterns []string,
 	maxWorkers int,
 	forcedCompress bool,
-	skipCRC bool) {
+	trustData bool) {
 
 	info, err := os.Stat(inputPath)
 	if err != nil {
@@ -315,7 +313,7 @@ func processFiles(inputPath, outputPath string,
 			compressType:   effectiveCompress(info.Name()),
 			keepOriginal:   keepOriginal,
 			forcedCompress: forcedCompress,
-			skipCRC:        skipCRC,
+			trustData:      trustData,
 		}
 	}
 
@@ -365,13 +363,13 @@ type task struct {
 	compressType   int
 	keepOriginal   bool
 	forcedCompress bool
-	skipCRC        bool
+	trustData      bool
 }
 
 func worker(tasks <-chan task, errors chan<- error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for tsk := range tasks {
-		if err := tsk.processor(tsk.path, tsk.outPath, tsk.compressType, tsk.forcedCompress, tsk.skipCRC); err != nil {
+		if err := tsk.processor(tsk.path, tsk.outPath, tsk.compressType, tsk.forcedCompress, tsk.trustData); err != nil {
 			errors <- fmt.Errorf("processing file %s: %v", tsk.path, err)
 		} else if !tsk.keepOriginal {
 			if err := os.Remove(tsk.path); err != nil {
