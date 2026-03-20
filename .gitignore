@@ -21,3 +21,4 @@
 go.work
 /dvpl_c/lz4_win64_dev
 /dvpl_c/lz4_win64_release
+/.installer/dvpl_go
