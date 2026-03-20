@@ -200,6 +200,7 @@ goto RELOAD
 :REINSTALL
 set SILENT=1
 call :UNINSTALL
+call :REMOVE_PATH
 set SILENT=
 goto INSTALL
 
@@ -324,7 +325,9 @@ if defined CLEAN_PATH (
 )
 
 reg add HKCU\Environment /v Path /t REG_EXPAND_SZ /d "!NEWPATH!" /f >nul
+reg add "HKCU\Software\XInstaller\DVPLGO" /v InstallPATH /t REG_SZ /d "%APP%" /f >nul
 
+if defined SILENT exit /b
 goto START
 
 
@@ -346,7 +349,9 @@ for %%A in ("%USER_PATH:;=" "%") do (
 )
 
 reg add HKCU\Environment /v Path /t REG_EXPAND_SZ /d "!NEWPATH!" /f >nul
+reg delete "HKCU\Software\XInstaller\DVPLGO\InstallPATH" /f
 
+if defined SILENT exit /b
 goto START
 
 
