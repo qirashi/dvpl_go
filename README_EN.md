@@ -7,7 +7,6 @@
 </div>
 
 # dvpl_go [RU](README.md) | [EN]
-
   > [!NOTE]
   > The converter uses the [lz4](https://github.com/lz4/lz4) library to improve compression speed and quality.  
   > The format has limitations on the size of compressed data!  
@@ -46,16 +45,17 @@ How to set variables:
             setx DVPL_COMPRESS_TYPE 1
             ```
 
-3. **Use set_env_variables.bat**
-    - Download `set_env_variables.bat` from the repository and run it.
+3. **Use installer.bat**
+    - Download `installer.bat` from the repository and run it.
     - Use internal functions for configuration.
+> [!WARNING]
+> Not recommended for use at the moment because it only works with a fixed path `C:\Tools\DvplGO `.  Created for debugging purposes.
 
 ## CMD
-
 ```cmd
 R:\Github\dvpl_go\out>dvpl.exe -h
 
-dvpl_go 2.0.0 x64 | Copyright (c) 2026 Qirashi
+dvpl_go 2.1.0 x64 | Copyright (c) 2026 Qirashi
 
 Usage: dvpl [options]
 [Options]:
@@ -79,16 +79,14 @@ Usage: dvpl [options]
         Maximum number of parallel workers (12). Minimum 1, recommended 2 | (default 2)
   -o string
         Output path. (file or directory)
-  -skip-crc
-        CRC can be ignored when unpacking or packing.
+  -trust-data
+        CRC and some checks are ignored.
 
 Examples:
-  Compress   : dvpl -c -i ./in_dir -o ./out_dir
-  Decompress : dvpl -d -i ./in_dir -o ./out_dir
-  Ignore     : dvpl -c -i ./in_dir -ignore "*.exe,*.dll"
-  Filter     : dvpl -d -i ./in_dir -o ./out_dir -filter "*.sc2,*.scg"
-  No compress: dvpl -c -i ./in_dir -ignore-compress "*.webp"
-  Compression: dvpl -c -i ./in_dir -compress 2
+        Compress   : dvpl -c -i ./in_dir -compress 1
+        Decompress : dvpl -d -i ./in_dir -o ./out_dir
+        Filter     : dvpl -d -i ./in_dir -o ./out_dir -filter "*.sc2,*.scg"
+        Ignore     : dvpl -c -i ./in_dir -ignore "*.exe,*.dll"
 ```
 
 ### Command Descriptions
@@ -124,7 +122,7 @@ Examples:
     - When values > maximum are specified, it is automatically adjusted.
     - The maximum number depends on the cores and threads of the processor.
 
-- `-skip-crc` - When unpacking, the CRC will be ignored.
+- `-trust-data` - CRC and some checks are ignored (Used to speed up decompression when working with a large amount of data or when trying unsuccessfully to decompress a file).
 
 ## Comparison of operating speed
 

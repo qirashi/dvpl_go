@@ -1,8 +1,6 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-
 title DVPL Installer
-
 color 0A
 
 :: ---------------- ADMIN CHECK ----------------
@@ -304,11 +302,8 @@ set CLEAN_PATH=
 
 for %%A in ("%USER_PATH:;=" "%") do (
     set PART=%%~A
-
     if not "!PART!"=="" (
-
         if /I "!PART!"=="%APP%" set FOUND=1
-
         if defined CLEAN_PATH (
             set CLEAN_PATH=!CLEAN_PATH!;!PART!
         ) else (
@@ -337,13 +332,9 @@ goto START
 set NEWPATH=
 
 for %%A in ("%USER_PATH:;=" "%") do (
-
     set PART=%%~A
-
     if not "!PART!"=="" (
-
         if /I not "!PART!"=="%APP%" (
-
             if defined NEWPATH (
                 set NEWPATH=!NEWPATH!;!PART!
             ) else (

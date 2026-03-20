@@ -7,7 +7,6 @@
 </div>
 
 # dvpl_go [RU] | [EN](README_EN.md)
-
   > [!NOTE]
   > Конвертер использует библиотеку [lz4](https://github.com/lz4/lz4) для повышения скорости и качества сжатия.  
   > Формат имеет ограничения по размеру сжимаемых данных!  
@@ -46,16 +45,17 @@
             setx DVPL_COMPRESS_TYPE 1
             ```
 
-3. **Использовать set_env_variables.bat**
-    - Скачайте из репозитория `set_env_variables.bat` и запустите.
+3. **Использовать installer.bat**
+    - Скачайте из репозитория `installer.bat` и запустите.
     - Используйте внутренние функции для настройки.
+> [!WARNING]
+> Не рекомендуется для использования на данный момент т.к работает только с фиксированным путём `C:\Tools\DvplGO`.  Создан в целях отладки.
 
 ## CMD
-
 ```cmd
 R:\Github\dvpl_go\out>dvpl.exe -h
 
-dvpl_go 2.0.0 x64 | Copyright (c) 2026 Qirashi
+dvpl_go 2.1.0 x64 | Copyright (c) 2026 Qirashi
 
 Usage: dvpl [options]
 [Options]:
@@ -79,16 +79,14 @@ Usage: dvpl [options]
         Maximum number of parallel workers (12). Minimum 1, recommended 2 | (default 2)
   -o string
         Output path. (file or directory)
-  -skip-crc
-        CRC can be ignored when unpacking or packing.
+  -trust-data
+        CRC and some checks are ignored.
 
 Examples:
-  Compress   : dvpl -c -i ./in_dir -o ./out_dir
-  Decompress : dvpl -d -i ./in_dir -o ./out_dir
-  Ignore     : dvpl -c -i ./in_dir -ignore "*.exe,*.dll"
-  Filter     : dvpl -d -i ./in_dir -o ./out_dir -filter "*.sc2,*.scg"
-  No compress: dvpl -c -i ./in_dir -ignore-compress "*.webp"
-  Compression: dvpl -c -i ./in_dir -compress 2
+        Compress   : dvpl -c -i ./in_dir -compress 1
+        Decompress : dvpl -d -i ./in_dir -o ./out_dir
+        Filter     : dvpl -d -i ./in_dir -o ./out_dir -filter "*.sc2,*.scg"
+        Ignore     : dvpl -c -i ./in_dir -ignore "*.exe,*.dll"
 ```
 
 ### Описание команд
@@ -124,7 +122,7 @@ Examples:
     - При указании значений > максимума автоматически корректируется.
     - Максимальное кол-во зависит от ядер и потоков процессора.
 
-- `-skip-crc` - При распаковке CRC будет проигнорирован.
+- `-trust-data` - CRC и некоторые проверки игнорируются (Используется для ускорения распаковки при работе с большим количеством данных или при неудачной попытке распаковать файл).
 
 ## Сравнение скорости работы
 
