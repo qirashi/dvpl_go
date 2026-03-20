@@ -61,7 +61,7 @@ func decompressLZ4(compressed []byte, uncompressedSize int) ([]byte, error) {
 	return uncompressed[:decompressedSize], nil
 }
 
-func Pack(data []byte, compressType int, forcedCompress bool, skipCRC bool) ([]byte, uint32, error) {
+func Pack(data []byte, compressType int, forcedCompress bool) ([]byte, uint32, error) {
 	lenData := len(data)
 
 	if lenData == 0 {
@@ -134,20 +134,17 @@ func Pack(data []byte, compressType int, forcedCompress bool, skipCRC bool) ([]b
 	return result, ptype, nil
 }
 
-func Unpack(data []byte, skipCRC bool) ([]byte, uint32, error) {
+func Unpack(data []byte, trustData bool) ([]byte, uint32, error) {
 	lenData := len(data)
 
 	const footerSize = 20 // Unpacked(4) + Packed(4) + CRC(4) + PType(4) + Marker(4)
-	if lenData == footerSize {
-		return []byte{}, 0, nil
-	}
-
 	if lenData < footerSize {
 		return nil, 0, fmt.Errorf("invalid DVPL data: size %d is less than footer size %d", lenData, footerSize)
 	}
 
-	footerBytes := data[lenData-footerSize:]
-	data = data[:lenData-footerSize]
+	payloadSize := lenData - footerSize
+	footerBytes := data[payloadSize:]
+	data = data[:payloadSize]
 
 	unpacked := binary.LittleEndian.Uint32(footerBytes[0:4])
 	packed := binary.LittleEndian.Uint32(footerBytes[4:8])
@@ -158,11 +155,19 @@ func Unpack(data []byte, skipCRC bool) ([]byte, uint32, error) {
 		return nil, ptype, fmt.Errorf("invalid marker")
 	}
 
-	if uint32(lenData-footerSize) != packed {
+	if lenData == footerSize {
+		return []byte{}, 0, nil
+	}
+
+	if uint32(payloadSize) != packed {
 		return nil, ptype, fmt.Errorf("packed size mismatch: got %d, expected %d", len(data), packed)
 	}
 
-	if !skipCRC && crc32.ChecksumIEEE(data) != crc {
+	if !trustData && unpacked > (1 << 30) { // > 1 GB
+		return nil, ptype, fmt.Errorf("unpacked size too large: %d", unpacked)
+	}
+
+	if !trustData && crc32.ChecksumIEEE(data) != crc {
 		return nil, ptype, fmt.Errorf("CRC32 mismatch")
 	}
 
