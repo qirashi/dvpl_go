@@ -15,10 +15,11 @@ set CXX=zig c++ -target x86_64-linux
 set CGO_ENABLED=1
 set GOOS=linux
 set GOARCH=amd64
-go build -o ./out/dvpl -buildvcs=false -ldflags="-s -w -buildid=" -trimpath -buildmode=exe -tags=release -asmflags="-trimpath" -mod=readonly dvpl_go.go
+go build -o ./out/dvpl-linux-x86_64/dvpl -buildvcs=false -ldflags="-s -w -buildid=" -trimpath -buildmode=exe -tags=release -asmflags="-trimpath" -mod=readonly dvpl_go.go
 if %ERRORLEVEL% neq 0 (
     echo Ошибка: Сборка завершилась с ошибкой. Код ошибки: %ERRORLEVEL%
     exit /b %ERRORLEVEL%
 )
 echo Сборка выполнена успешно.
 
+@pause
