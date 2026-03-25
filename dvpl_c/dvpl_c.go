@@ -5,8 +5,11 @@
 package dvpl_c
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/lz4_win64_dev/include -O3 -DNDEBUG -fomit-frame-pointer -mtune=native
-#cgo LDFLAGS: -L${SRCDIR}/lz4_win64_dev/static -lliblz4_static -Wl,-O1 -Wl,--as-needed
+#cgo windows CFLAGS: -I${SRCDIR}/lz4_win64_dev/include -O3 -DNDEBUG -fomit-frame-pointer -mtune=native
+#cgo windows LDFLAGS: -L${SRCDIR}/lz4_win64_dev/static -lliblz4 -Wl,-O1 -Wl,--as-needed
+
+#cgo linux CFLAGS: -I${SRCDIR}/lz4_linux_dev/include -O3 -DNDEBUG -fomit-frame-pointer
+#cgo linux LDFLAGS: -L${SRCDIR}/lz4_linux_dev/static -llz4 -Wl,-O1 -Wl,--as-needed
 
 #include <lz4.h>
 #include <lz4hc.h>

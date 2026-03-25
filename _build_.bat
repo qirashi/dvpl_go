@@ -10,7 +10,11 @@ echo Модернизация кода...
 go fix ./...
 
 echo Начинаю сборку.
+set CC=
+set CXX=
 set CGO_ENABLED=1
+set GOOS=windows
+set GOARCH=amd64
 go build -o ./out/dvpl.exe -buildvcs=false -ldflags="-s -w -buildid=" -trimpath -buildmode=exe -tags=release -asmflags="-trimpath" -mod=readonly dvpl_go.go
 if %ERRORLEVEL% neq 0 (
     echo Ошибка: Сборка завершилась с ошибкой. Код ошибки: %ERRORLEVEL%
