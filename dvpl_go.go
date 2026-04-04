@@ -301,8 +301,9 @@ func processFiles(inputPath, outputPath string,
 	}
 
 	addTask := func(path string, name string) {
-		relativePath, _ := filepath.Rel(inputPath, path)
-		outPath := filepath.Join(outputPath, relativePath)
+		rel := strings.TrimPrefix(path, inputPath)
+		rel = strings.TrimPrefix(rel, string(filepath.Separator))
+		outPath := filepath.Join(outputPath, rel)
 
 		tasks <- task{
 			path:           path,
