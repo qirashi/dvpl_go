@@ -213,9 +213,7 @@ func matchesAnyPattern(name string, patterns []string) bool {
 	return false
 }
 
-func shouldProcessFile(path string, info os.FileInfo, exeFileName string, compressFlag bool, ignorePatterns, filterPatterns []string) bool {
-	name := info.Name()
-
+func shouldProcessFile(path string, name string, exeFileName string, compressFlag bool, ignorePatterns, filterPatterns []string) bool {
 	if compressFlag && name == exeFileName {
 		fmt.Printf("Excluding file: %s\n", path)
 		return false
@@ -302,7 +300,7 @@ func processFiles(inputPath, outputPath string,
 		return compressType
 	}
 
-	addTask := func(path string, info os.FileInfo) {
+	addTask := func(path string, name string) {
 		relativePath, _ := filepath.Rel(inputPath, path)
 		outPath := filepath.Join(outputPath, relativePath)
 
@@ -310,7 +308,7 @@ func processFiles(inputPath, outputPath string,
 			path:           path,
 			outPath:        outPath,
 			processor:      processor,
-			compressType:   effectiveCompress(info.Name()),
+			compressType:   effectiveCompress(name),
 			keepOriginal:   keepOriginal,
 			forcedCompress: forcedCompress,
 			trustData:      trustData,
@@ -339,18 +337,17 @@ func processFiles(inputPath, outputPath string,
 			if d.IsDir() {
 				return nil
 			}
-			fileInfo, _ := d.Info()
-			if shouldProcessFile(path, fileInfo, exeFileName, compressFlag, ignorePatterns, filterPatterns) {
-				addTask(path, fileInfo)
+			if shouldProcessFile(path, d.Name(), exeFileName, compressFlag, ignorePatterns, filterPatterns) {
+				addTask(path, d.Name())
 			}
 			return nil
 		})
 	} else {
-		if !shouldProcessFile(inputPath, info, exeFileName, compressFlag, ignorePatterns, filterPatterns) {
+		if !shouldProcessFile(inputPath, info.Name(), exeFileName, compressFlag, ignorePatterns, filterPatterns) {
 			finishAndReturn()
 			return
 		}
-		addTask(inputPath, info)
+		addTask(inputPath, info.Name())
 	}
 
 	finishAndReturn()
