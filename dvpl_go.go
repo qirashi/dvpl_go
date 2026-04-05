@@ -22,7 +22,7 @@ import (
 
 const (
 	dvplExt = ".dvpl"
-	dvplInf = "dvpl_go 2.1.0 x64 | Copyright (c) 2026 Qirashi"
+	dvplInf = "dvpl_go 2.1.1 x64 | Copyright (c) 2026 Qirashi"
 )
 
 func main() {
@@ -324,6 +324,18 @@ func processFiles(inputPath, outputPath string,
 		for _, e := range errList {
 			fmt.Printf("[error] %v\n", e)
 		}
+
+		if len(errList) > 0 {
+			fmt.Println("\nPress any key to continue...")
+
+			keysEvents, err := keyboard.GetKeys(10)
+			if err != nil {
+				return
+			}
+			defer keyboard.Close()
+
+			<-keysEvents
+		}
 	}
 
 	if info.IsDir() {
@@ -476,6 +488,7 @@ func interactiveMode(maxWorkers int) {
 				decompressInteractive(maxWorkers)
 			case 2:
 				flag.Usage()
+				fmt.Println("\nPress any key to continue...")
 				<-keysEvents
 			}
 			return
@@ -530,7 +543,6 @@ func compressInteractive(maxWorkers int) {
 		case keyboard.KeyEnter:
 			fmt.Print("\033[2J\033[H")
 			selectedCompressionType := compressionTypes[selectedIndex]
-			fmt.Println("Start compressing...")
 			processFiles(".", ".", Pack, false, true, selectedCompressionType, nil, nil, nil, maxWorkers, false, true)
 			return
 		case keyboard.KeyEsc:
@@ -540,6 +552,5 @@ func compressInteractive(maxWorkers int) {
 }
 
 func decompressInteractive(maxWorkers int) {
-	fmt.Println("Start decompressing...")
 	processFiles(".", ".", Unpack, false, false, 0, nil, nil, nil, maxWorkers, false, true)
 }
