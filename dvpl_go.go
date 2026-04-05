@@ -22,7 +22,7 @@ import (
 
 const (
 	dvplExt = ".dvpl"
-	dvplInf = "dvpl_go 2.1.1 x64 | Copyright (c) 2026 Qirashi"
+	dvplInf = "DvplGo 2.1.1 x64 | Copyright (c) 2026 Qirashi"
 )
 
 func main() {
@@ -458,7 +458,7 @@ func interactiveMode(maxWorkers int) {
 	selectedIndex := 0
 
 	for {
-		fmt.Printf("\033[H%s\n\nUsage: dvpl_go [-h] - To get help.\nPress Ctrl+C or Esc to exit.\n\n", dvplInf)
+		fmt.Printf("\033[H%s\n\nUsage: dvpl [-h] - To get help.\nPress Ctrl+C or Esc to exit.\n\n", dvplInf)
 
 		drawMenu(options, selectedIndex)
 
