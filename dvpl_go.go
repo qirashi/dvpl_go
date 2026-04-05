@@ -283,12 +283,14 @@ func processFiles(inputPath, outputPath string,
 	}
 
 	var errList []error
-	var collectWg sync.WaitGroup
-	collectWg.Go(func() {
+
+	done := make(chan struct{})
+	go func() {
 		for err := range errorsCh {
 			errList = append(errList, err)
 		}
-	})
+		close(done)
+	}()
 
 	effectiveCompress := func(name string) int {
 		if matchesAnyPattern(name, ignoreCompressPatterns) {
@@ -317,7 +319,7 @@ func processFiles(inputPath, outputPath string,
 		close(tasks)
 		wg.Wait()
 		close(errorsCh)
-		collectWg.Wait()
+		<-done
 		fmt.Println("\nOperation completed!")
 		for _, e := range errList {
 			fmt.Printf("[error] %v\n", e)
