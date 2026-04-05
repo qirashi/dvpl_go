@@ -283,13 +283,10 @@ func processFiles(inputPath, outputPath string,
 	}
 
 	var errList []error
-	var errMu sync.Mutex
 	var collectWg sync.WaitGroup
 	collectWg.Go(func() {
 		for err := range errorsCh {
-			errMu.Lock()
 			errList = append(errList, err)
-			errMu.Unlock()
 		}
 	})
 
@@ -322,11 +319,9 @@ func processFiles(inputPath, outputPath string,
 		close(errorsCh)
 		collectWg.Wait()
 		fmt.Println("\nOperation completed!")
-		errMu.Lock()
 		for _, e := range errList {
 			fmt.Printf("[error] %v\n", e)
 		}
-		errMu.Unlock()
 	}
 
 	if info.IsDir() {
