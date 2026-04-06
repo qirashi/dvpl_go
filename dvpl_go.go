@@ -22,7 +22,7 @@ import (
 
 const (
 	dvplExt = ".dvpl"
-	dvplInf = "dvpl_go 2.1.0 x64 | Copyright (c) 2026 Qirashi"
+	dvplInf = "DvplGo 2.1.1 x64 | Copyright (c) 2026 Qirashi"
 )
 
 func main() {
@@ -62,6 +62,11 @@ Examples:
 		}
 	}
 
+	if *compressType < 0 || *compressType > 2 {
+		fmt.Printf("[warn] Invalid compression type: %d. Using default: 1.\n", *compressType)
+		*compressType = 1
+	}
+
 	if len(os.Args) == 1 {
 		interactiveMode(*maxWorkers)
 		return
@@ -77,8 +82,7 @@ Examples:
 	flag.Parse()
 
 	if (*compressFlag && *decompressFlag) || (!*compressFlag && !*decompressFlag) {
-		fmt.Println("[debug] Specify either compression (-c) or decompression (-d)")
-		flag.Usage()
+		fmt.Println("[error] Specify either compression (-c) or decompression (-d)")
 		return
 	}
 
@@ -94,11 +98,17 @@ Examples:
 	var ignoreList []string
 	if *ignorePatterns != "" {
 		ignoreList = strings.Split(*ignorePatterns, ",")
+		for i := range ignoreList {
+			ignoreList[i] = strings.TrimSpace(ignoreList[i])
+		}
 	}
 
 	var ignoreCompressList []string
 	if *ignoreCompressPatterns != "" {
 		ignoreCompressList = strings.Split(*ignoreCompressPatterns, ",")
+		for i := range ignoreCompressList {
+			ignoreCompressList[i] = strings.TrimSpace(ignoreCompressList[i])
+		}
 	}
 
 	var filterList []string
@@ -283,15 +293,14 @@ func processFiles(inputPath, outputPath string,
 	}
 
 	var errList []error
-	var errMu sync.Mutex
-	var collectWg sync.WaitGroup
-	collectWg.Go(func() {
+
+	done := make(chan struct{})
+	go func() {
 		for err := range errorsCh {
-			errMu.Lock()
 			errList = append(errList, err)
-			errMu.Unlock()
 		}
-	})
+		close(done)
+	}()
 
 	effectiveCompress := func(name string) int {
 		if matchesAnyPattern(name, ignoreCompressPatterns) {
@@ -300,7 +309,10 @@ func processFiles(inputPath, outputPath string,
 		return compressType
 	}
 
+	var totalTasks int
+
 	addTask := func(path string, name string) {
+		totalTasks++
 		rel := strings.TrimPrefix(path, inputPath)
 		rel = strings.TrimPrefix(rel, string(filepath.Separator))
 		outPath := filepath.Join(outputPath, rel)
@@ -320,13 +332,16 @@ func processFiles(inputPath, outputPath string,
 		close(tasks)
 		wg.Wait()
 		close(errorsCh)
-		collectWg.Wait()
-		fmt.Println("\nOperation completed!")
-		errMu.Lock()
+		<-done
+		successCount := totalTasks - len(errList)
+		fmt.Printf("\nOperation completed! %d files, %d success, %d errors\n", totalTasks, successCount, len(errList))
 		for _, e := range errList {
 			fmt.Printf("[error] %v\n", e)
 		}
-		errMu.Unlock()
+
+		if len(errList) > 0 {
+			waitForKey()
+		}
 	}
 
 	if info.IsDir() {
@@ -374,6 +389,16 @@ func worker(tasks <-chan task, errors chan<- error, wg *sync.WaitGroup) {
 				errors <- fmt.Errorf("removing original file %s: %v", tsk.path, err)
 			}
 		}
+	}
+}
+
+func waitForKey() {
+	fmt.Println("\nPress Enter to continue...")
+
+	var b [1]byte
+	_, err := os.Stdin.Read(b[:])
+	if err != nil {
+		return
 	}
 }
 
@@ -449,7 +474,7 @@ func interactiveMode(maxWorkers int) {
 	selectedIndex := 0
 
 	for {
-		fmt.Printf("\033[H%s\n\nUsage: dvpl_go [-h] - To get help.\nPress Ctrl+C or Esc to exit.\n\n", dvplInf)
+		fmt.Printf("\033[H%s\n\nUsage: dvpl [-h] - To get help.\nPress Ctrl+C or Esc to exit.\n\n", dvplInf)
 
 		drawMenu(options, selectedIndex)
 
@@ -474,12 +499,12 @@ func interactiveMode(maxWorkers int) {
 			fmt.Print("\033[2J\033[H")
 			switch selectedIndex {
 			case 0:
-				compressInteractive(maxWorkers)
+				compressInteractive(keysEvents, maxWorkers)
 			case 1:
 				decompressInteractive(maxWorkers)
 			case 2:
 				flag.Usage()
-				<-keysEvents
+				waitForKey()
 			}
 			return
 		case keyboard.KeyEsc:
@@ -488,14 +513,7 @@ func interactiveMode(maxWorkers int) {
 	}
 }
 
-func compressInteractive(maxWorkers int) {
-	keysEvents, err := keyboard.GetKeys(10)
-	if err != nil {
-		fmt.Printf("[error] Failed to initialize keyboard: %v\n", err)
-		return
-	}
-	defer keyboard.Close()
-
+func compressInteractive(keysEvents <-chan keyboard.KeyEvent, maxWorkers int) {
 	fmt.Print("\033[?25l")
 	defer fmt.Print("\033[?25h")
 	fmt.Print("\033[2J\033[H")
@@ -533,7 +551,6 @@ func compressInteractive(maxWorkers int) {
 		case keyboard.KeyEnter:
 			fmt.Print("\033[2J\033[H")
 			selectedCompressionType := compressionTypes[selectedIndex]
-			fmt.Println("Start compressing...")
 			processFiles(".", ".", Pack, false, true, selectedCompressionType, nil, nil, nil, maxWorkers, false, true)
 			return
 		case keyboard.KeyEsc:
@@ -543,6 +560,5 @@ func compressInteractive(maxWorkers int) {
 }
 
 func decompressInteractive(maxWorkers int) {
-	fmt.Println("Start decompressing...")
 	processFiles(".", ".", Unpack, false, false, 0, nil, nil, nil, maxWorkers, false, true)
 }

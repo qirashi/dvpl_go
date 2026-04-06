@@ -114,7 +114,6 @@ Examples:
     #### Примеры:
     - `*.exe` — игнорировать все `.exe` файлы.
     - `file?.log` — игнорировать файлы вида `file1.log`, `file2.log`.
-    - `folder/*.txt` — игнорировать все `.txt` файлы в папке `folder`.
     - `data[1-3].csv` — игнорировать файлы `data1.csv`, `data2.csv`, `data3.csv`.
     - `image_[xyz].png` — игнорировать файлы `image_x.png`, `image_y.png`, `image_z.png`.
 
