@@ -22,7 +22,7 @@ import (
 
 const (
 	dvplExt = ".dvpl"
-	dvplInf = "DvplGo 2.1.1 x64 | Copyright (c) 2026 Qirashi"
+	dvplInf = "DvplGo 2.1.2 x64 | Copyright (c) 2026 Qirashi"
 )
 
 func main() {
