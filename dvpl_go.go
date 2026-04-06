@@ -485,7 +485,7 @@ func interactiveMode(maxWorkers int) {
 			fmt.Print("\033[2J\033[H")
 			switch selectedIndex {
 			case 0:
-				compressInteractive(maxWorkers)
+				compressInteractive(keysEvents, maxWorkers)
 			case 1:
 				decompressInteractive(maxWorkers)
 			case 2:
@@ -499,14 +499,7 @@ func interactiveMode(maxWorkers int) {
 	}
 }
 
-func compressInteractive(maxWorkers int) {
-	keysEvents, err := keyboard.GetKeys(10)
-	if err != nil {
-		fmt.Printf("[error] Failed to initialize keyboard: %v\n", err)
-		return
-	}
-	defer keyboard.Close()
-
+func compressInteractive(keysEvents <-chan keyboard.KeyEvent, maxWorkers int) {
 	fmt.Print("\033[?25l")
 	defer fmt.Print("\033[?25h")
 	fmt.Print("\033[2J\033[H")
