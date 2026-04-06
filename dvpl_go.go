@@ -62,6 +62,11 @@ Examples:
 		}
 	}
 
+	if *compressType < 0 || *compressType > 2 {
+		fmt.Printf("[warn] Invalid compression type: %d. Using default: 1.\n", *compressType)
+		*compressType = 1
+	}
+
 	if len(os.Args) == 1 {
 		interactiveMode(*maxWorkers)
 		return
@@ -78,7 +83,6 @@ Examples:
 
 	if (*compressFlag && *decompressFlag) || (!*compressFlag && !*decompressFlag) {
 		fmt.Println("[error] Specify either compression (-c) or decompression (-d)")
-		flag.Usage()
 		return
 	}
 
@@ -94,11 +98,17 @@ Examples:
 	var ignoreList []string
 	if *ignorePatterns != "" {
 		ignoreList = strings.Split(*ignorePatterns, ",")
+		for i := range ignoreList {
+			ignoreList[i] = strings.TrimSpace(ignoreList[i])
+		}
 	}
 
 	var ignoreCompressList []string
 	if *ignoreCompressPatterns != "" {
 		ignoreCompressList = strings.Split(*ignoreCompressPatterns, ",")
+		for i := range ignoreCompressList {
+			ignoreCompressList[i] = strings.TrimSpace(ignoreCompressList[i])
+		}
 	}
 
 	var filterList []string
