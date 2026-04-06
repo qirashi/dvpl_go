@@ -309,7 +309,10 @@ func processFiles(inputPath, outputPath string,
 		return compressType
 	}
 
+	var totalTasks int
+
 	addTask := func(path string, name string) {
+		totalTasks++
 		rel := strings.TrimPrefix(path, inputPath)
 		rel = strings.TrimPrefix(rel, string(filepath.Separator))
 		outPath := filepath.Join(outputPath, rel)
@@ -330,7 +333,8 @@ func processFiles(inputPath, outputPath string,
 		wg.Wait()
 		close(errorsCh)
 		<-done
-		fmt.Println("\nOperation completed!")
+		successCount := totalTasks - len(errList)
+		fmt.Printf("\nOperation completed! %d files, %d success, %d errors\n", totalTasks, successCount, len(errList))
 		for _, e := range errList {
 			fmt.Printf("[error] %v\n", e)
 		}
