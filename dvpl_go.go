@@ -77,7 +77,7 @@ Examples:
 	flag.Parse()
 
 	if (*compressFlag && *decompressFlag) || (!*compressFlag && !*decompressFlag) {
-		fmt.Println("[debug] Specify either compression (-c) or decompression (-d)")
+		fmt.Println("[error] Specify either compression (-c) or decompression (-d)")
 		flag.Usage()
 		return
 	}
@@ -326,15 +326,7 @@ func processFiles(inputPath, outputPath string,
 		}
 
 		if len(errList) > 0 {
-			fmt.Println("\nPress any key to continue...")
-
-			keysEvents, err := keyboard.GetKeys(10)
-			if err != nil {
-				return
-			}
-			defer keyboard.Close()
-
-			<-keysEvents
+			waitForKey()
 		}
 	}
 
@@ -383,6 +375,16 @@ func worker(tasks <-chan task, errors chan<- error, wg *sync.WaitGroup) {
 				errors <- fmt.Errorf("removing original file %s: %v", tsk.path, err)
 			}
 		}
+	}
+}
+
+func waitForKey() {
+	fmt.Println("\nPress Enter to continue...")
+
+	var b [1]byte
+	_, err := os.Stdin.Read(b[:])
+	if err != nil {
+		return
 	}
 }
 
@@ -488,8 +490,7 @@ func interactiveMode(maxWorkers int) {
 				decompressInteractive(maxWorkers)
 			case 2:
 				flag.Usage()
-				fmt.Println("\nPress any key to continue...")
-				<-keysEvents
+				waitForKey()
 			}
 			return
 		case keyboard.KeyEsc:
