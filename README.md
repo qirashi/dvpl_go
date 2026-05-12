@@ -1,10 +1,10 @@
 <div align="center">
-	
-![License](https://img.shields.io/github/license/qirashi/dvpl_go?style=flat)
-![Downloads](https://img.shields.io/github/downloads/qirashi/dvpl_go/total?logo=github&label=Downloads&style=flat)
-![Last Commit](https://img.shields.io/github/last-commit/qirashi/dvpl_go?style=flat)
-![Stars](https://img.shields.io/github/stars/qirashi/dvpl_go?style=flat&logo=github)
-![Code Size](https://img.shields.io/github/languages/code-size/qirashi/dvpl_go?style=flat&label=Code%20Size)
+
+![Downloads](https://img.shields.io/github/downloads/qirashi/dvpl_go/total?logo=github&label=Downloads&style=for-the-badge)
+![License](https://img.shields.io/github/license/qirashi/dvpl_go?style=for-the-badge)
+![Last Commit](https://img.shields.io/github/last-commit/qirashi/dvpl_go?style=for-the-badge)
+![Stars](https://img.shields.io/github/stars/qirashi/dvpl_go?style=for-the-badge&logo=github)
+![Code Size](https://img.shields.io/github/languages/code-size/qirashi/dvpl_go?style=for-the-badge&label=Code%20Size)
 
 </div>
 
@@ -44,14 +44,10 @@
       *   Для одного пользователя:
             ```cmd
             setx DVPL_MAX_WORKERS 4
+            ```
+            ```cmd
             setx DVPL_COMPRESS_TYPE 1
             ```
-
-3. **Использовать installer.bat**
-    - Скачайте из репозитория `installer.bat` и запустите.
-    - Используйте внутренние функции для настройки.
-> [!WARNING]
-> Не рекомендуется для использования на данный момент т.к работает только с фиксированным путём `C:\Tools\DvplGO`.  Создан в целях отладки.
 
 ## CMD
 ```cmd

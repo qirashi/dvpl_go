@@ -1,10 +1,10 @@
 <div align="center">
-	
-![License](https://img.shields.io/github/license/qirashi/dvpl_go?style=flat)
-![Downloads](https://img.shields.io/github/downloads/qirashi/dvpl_go/total?logo=github&label=Downloads&style=flat)
-![Last Commit](https://img.shields.io/github/last-commit/qirashi/dvpl_go?style=flat)
-![Stars](https://img.shields.io/github/stars/qirashi/dvpl_go?style=flat&logo=github)
-![Code Size](https://img.shields.io/github/languages/code-size/qirashi/dvpl_go?style=flat&label=Code%20Size)
+
+![Downloads](https://img.shields.io/github/downloads/qirashi/dvpl_go/total?logo=github&label=Downloads&style=for-the-badge)
+![License](https://img.shields.io/github/license/qirashi/dvpl_go?style=for-the-badge)
+![Last Commit](https://img.shields.io/github/last-commit/qirashi/dvpl_go?style=for-the-badge)
+![Stars](https://img.shields.io/github/stars/qirashi/dvpl_go?style=for-the-badge&logo=github)
+![Code Size](https://img.shields.io/github/languages/code-size/qirashi/dvpl_go?style=for-the-badge&label=Code%20Size)
 
 </div>
 
@@ -44,14 +44,10 @@ How to set variables:
       *   For a single user:
             ```cmd
             setx DVPL_MAX_WORKERS 4
+            ```
+            ```cmd
             setx DVPL_COMPRESS_TYPE 1
             ```
-
-3. **Use installer.bat**
-    - Download `installer.bat` from the repository and run it.
-    - Use internal functions for configuration.
-> [!WARNING]
-> Not recommended for use at the moment because it only works with a fixed path `C:\Tools\DvplGO `.  Created for debugging purposes.
 
 ## CMD
 ```cmd

@@ -1,6 +1,6 @@
 module dvpl_go
 
-go 1.26.1
+go 1.26.3
 
 require (
 	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203
