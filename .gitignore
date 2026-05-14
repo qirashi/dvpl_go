@@ -20,8 +20,9 @@
 # Go workspace file
 go.work
 
-/dvpl_c/lz4_win64_dev
-/dvpl_c/lz4_linux_dev
-/dvpl_c/lz4_win64_release
+dvpl_go/dvpl_c/lz4_win64_dev
+dvpl_go/dvpl_c/lz4_linux_dev
+dvpl_go/dvpl_c/lz4_win64_release
+dvpl_go/out
 
-/out
+installer/out
