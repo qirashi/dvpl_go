@@ -6,6 +6,7 @@ package main
 
 import (
 	dvpl "dvpl_go/dvpl_c"
+	"dvpl_go/terminal"
 
 	"flag"
 	"fmt"
@@ -40,6 +41,8 @@ const (
 )
 
 func main() {
+	terminal.EnableVirtualTerminal()
+
 	compressFlag := flag.Bool("c", false, "")
 	decompressFlag := flag.Bool("d", false, "")
 	inputPath := flag.String("i", "", "")
