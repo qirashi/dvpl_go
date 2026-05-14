@@ -22,32 +22,88 @@ import (
 
 const (
 	dvplExt = ".dvpl"
-	dvplInf = "DvplGo 2.1.3 x64 | Copyright (c) 2026 Qirashi"
+	dvplInf = esc_color_green + "DvplGo 2.1.4 x64" + esc_color_reset + " | " + esc_color_cyan + "Copyright (c) 2026 Qirashi" + esc_color_reset
+)
+
+const (
+	esc_cursorHide   = "\033[?25l"
+	esc_cursorShow   = "\033[?25h"
+	esc_screenClear  = "\033[2J"
+	esc_cursorHome   = "\033[H"
+	esc_clearAndHome = esc_screenClear + esc_cursorHome
+
+	esc_color_reset  = "\033[0m"
+	esc_color_cyan   = "\033[36m"
+	esc_color_yellow = "\033[33m"
+	esc_color_red    = "\033[31m"
+	esc_color_green  = "\033[32m"
 )
 
 func main() {
-	compressFlag := flag.Bool("c", false, "Compress .dvpl files.")
-	decompressFlag := flag.Bool("d", false, "Decompress .dvpl files.")
-	inputPath := flag.String("i", "", "Input path. (file or directory)")
-	outputPath := flag.String("o", "", "Output path. (file or directory)")
-	keepOriginal := flag.Bool("keep-original", false, "Keep original files.")
-	compressType := flag.Int("compress", 1, "Compression type: 0 (none), 1 (lz4hc), 2 (lz4) |")
-	ignorePatterns := flag.String("ignore", "", "List of file patterns to ignore. (\"*.exe,*.dll\")")
-	filterPatterns := flag.String("filter", "", "List of file patterns to include. (\"*.sc2,*.scg\")")
-	ignoreCompressPatterns := flag.String("ignore-compress", "", "List of file patterns for which compression should be disabled. (\"*.webp\")")
-	forcedCompress := flag.Bool("forced-compress", false, "Force compression even if the result is larger than the original.")
-	maxWorkers := flag.Int("m", 2, fmt.Sprintf("Maximum number of parallel workers (%d). Minimum 1, recommended 2 |", runtime.NumCPU()))
-	trustData := flag.Bool("trust-data", false, "CRC and some checks are ignored.")
+	compressFlag := flag.Bool("c", false, "")
+	decompressFlag := flag.Bool("d", false, "")
+	inputPath := flag.String("i", "", "")
+	outputPath := flag.String("o", "", "")
+	keepOriginal := flag.Bool("keep-original", false, "")
+	compressType := flag.Int("compress", 1, "")
+	ignorePatterns := flag.String("ignore", "", "")
+	filterPatterns := flag.String("filter", "", "")
+	ignoreCompressPatterns := flag.String("ignore-compress", "", "")
+	forcedCompress := flag.Bool("forced-compress", false, "")
+	maxWorkers := flag.Int("m", 2, "")
+	trustData := flag.Bool("trust-data", false, "")
 
 	flag.Usage = func() {
-		fmt.Printf("\n%s\n\nUsage: dvpl [options]\n[Options]:\n", dvplInf)
-		flag.PrintDefaults()
-		fmt.Println(`
-Examples:
-	Compress   : dvpl -c -i ./in_dir -compress 1
-	Decompress : dvpl -d -i ./in_dir -o ./out_dir
-	Filter     : dvpl -d -i ./in_dir -o ./out_dir -filter "*.sc2,*.scg"
-	Ignore     : dvpl -c -i ./in_dir -ignore "*.exe,*.dll"`)
+		fmt.Printf(`
+%s
+
+Usage: %sdvpl%s %s(-c|-d) -i%s <path> %s[options]%s
+%s[main options]%s
+  %s-c%s                  Compress files into .dvpl format.
+  %s-d%s                  Decompress .dvpl files.
+  %s-i%s <path>           Input file or directory.
+  %s-o%s <path>           Output file or directory (default: same as -i).
+
+%s[general options]%s
+  %s-filter%s <masks>     Process only files matching given patterns, e.g. "*.sc2,*.scg".
+  %s-ignore%s <masks>     Skip files matching given patterns, e.g. "*.exe,*.dll".
+  %s-keep-original%s      Do not delete original files after processing.
+  %s-m%s <number>         Max parallel workers (default 2, max %d).
+  %s-trust-data%s         Skip CRC and some integrity checks.
+
+%s[compress options]%s
+  %s-compress%s <type>    Compression type: 0=none, 1=lz4hc, 2=lz4, (default 1).
+  %s-forced-compress%s    Force compression even if result is larger than original.
+  %s-ignore-compress%s <masks>
+                      Disable compression for files matching these patterns, e.g. "*.webp".
+
+%s[examples]%s
+  Compress   : dvpl -c -i ./input -compress 1
+  Decompress : dvpl -d -i ./input -o ./output
+  Filter     : dvpl -d -i ./input -o ./output -filter "*.sc2,*.scg"
+  Ignore     : dvpl -c -i ./input -ignore "*.exe,*.dll"
+`,
+			dvplInf,
+			esc_color_green, esc_color_reset,
+			esc_color_yellow, esc_color_reset,
+			esc_color_cyan, esc_color_reset,
+			esc_color_cyan, esc_color_reset,
+			esc_color_green, esc_color_reset,
+			esc_color_green, esc_color_reset,
+			esc_color_green, esc_color_reset,
+			esc_color_green, esc_color_reset,
+			esc_color_cyan, esc_color_reset,
+			esc_color_green, esc_color_reset,
+			esc_color_green, esc_color_reset,
+			esc_color_green, esc_color_reset,
+			esc_color_green, esc_color_reset, runtime.NumCPU(),
+			esc_color_green, esc_color_reset,
+			esc_color_cyan, esc_color_reset,
+			esc_color_green, esc_color_reset,
+			esc_color_green, esc_color_reset,
+			esc_color_green, esc_color_reset,
+			esc_color_cyan, esc_color_reset,
+		)
 	}
 
 	if envMaxWorkers := os.Getenv("DVPL_MAX_WORKERS"); envMaxWorkers != "" {
@@ -59,12 +115,11 @@ Examples:
 	if envCompress := os.Getenv("DVPL_COMPRESS_TYPE"); envCompress != "" {
 		if val, err := strconv.Atoi(envCompress); err == nil {
 			*compressType = val
+			if *compressType < 0 || *compressType > 5 {
+				printWarn("Invalid compression type: %d. Using valid: 1.", *compressType)
+				*compressType = 1
+			}
 		}
-	}
-
-	if *compressType < 0 || *compressType > 2 {
-		fmt.Printf("[warn] Invalid compression type: %d. Using default: 1.\n", *compressType)
-		*compressType = 1
 	}
 
 	if len(os.Args) == 1 {
@@ -81,8 +136,13 @@ Examples:
 
 	flag.Parse()
 
+	if *compressType < 0 || *compressType > 5 {
+		printWarn("Invalid compression type: %d. Using valid: 1.", *compressType)
+		*compressType = 5
+	}
+
 	if (*compressFlag && *decompressFlag) || (!*compressFlag && !*decompressFlag) {
-		fmt.Println("[error] Specify either compression (-c) or decompression (-d)")
+		printError("Specify either compression (-c) or decompression (-d)")
 		return
 	}
 
@@ -126,6 +186,18 @@ Examples:
 	}
 }
 
+func printInfo(format string, a ...any) {
+	fmt.Printf(esc_color_cyan+"[info]"+esc_color_reset+" "+format+"\n", a...)
+}
+
+func printWarn(format string, a ...any) {
+	fmt.Printf(esc_color_yellow+"[warn]"+esc_color_reset+" "+format+"\n", a...)
+}
+
+func printError(format string, a ...any) {
+	fmt.Printf(esc_color_red+"[error]"+esc_color_reset+" "+format+"\n", a...)
+}
+
 func getCompressionTypeString(compressionType uint32) string {
 	switch compressionType {
 	case 0:
@@ -167,7 +239,7 @@ func Pack(inputPath, outputPath string, compressType int, forcedCompress bool, t
 		return fmt.Errorf("failed to pack data: %v", err)
 	}
 
-	fmt.Printf("Pack [%s]: %s\n", getCompressionTypeString(compressionType), inputPath)
+	fmt.Printf("Pack %s[%s]%s: %s\n", esc_color_cyan, getCompressionTypeString(compressionType), esc_color_reset, inputPath)
 
 	if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
 		return fmt.Errorf("failed to create output directory: %v", err)
@@ -193,7 +265,7 @@ func Unpack(inputPath, outputPath string, _ int, _ bool, trustData bool) error {
 		return fmt.Errorf("failed to unpack data: %v", err)
 	}
 
-	fmt.Printf("Unpack [%s]: %s\n", getCompressionTypeString(compressionType), inputPath)
+	fmt.Printf("Unpack %s[%s]%s: %s\n", esc_color_cyan, getCompressionTypeString(compressionType), esc_color_reset, inputPath)
 
 	outputPath = strings.TrimSuffix(outputPath, dvplExt)
 
@@ -215,7 +287,7 @@ func matchesAnyPattern(name string, patterns []string) bool {
 		}
 
 		if ok, err := filepath.Match(p, name); err != nil {
-			fmt.Printf("[info] invalid pattern %q: %v\n", p, err)
+			printWarn("Invalid pattern %q: %v", p, err)
 		} else if ok {
 			return true
 		}
@@ -225,7 +297,7 @@ func matchesAnyPattern(name string, patterns []string) bool {
 
 func shouldProcessFile(path string, name string, exeFileName string, compressFlag bool, ignorePatterns, filterPatterns []string) bool {
 	if compressFlag && name == exeFileName {
-		fmt.Printf("Excluding file: %s\n", path)
+		printInfo("Excluding file: %s", path)
 		return false
 	}
 
@@ -238,7 +310,7 @@ func shouldProcessFile(path string, name string, exeFileName string, compressFla
 	}
 
 	if matchesAnyPattern(name, ignorePatterns) {
-		fmt.Printf("Ignoring file: %s\n", path)
+		printInfo("Ignoring file: %s", path)
 		return false
 	}
 
@@ -249,7 +321,7 @@ func shouldProcessFile(path string, name string, exeFileName string, compressFla
 		}
 
 		if !matchesAnyPattern(filterName, filterPatterns) {
-			fmt.Printf("Filter skip: %s\n", path)
+			printInfo("Filter skip: %s", path)
 			return false
 		}
 	}
@@ -271,7 +343,7 @@ func processFiles(inputPath, outputPath string,
 
 	info, err := os.Stat(inputPath)
 	if err != nil {
-		fmt.Printf("[error] Error accessing input path: %v\n", err)
+		printError("Error accessing input path: %v", err)
 		return
 	}
 
@@ -279,7 +351,7 @@ func processFiles(inputPath, outputPath string,
 
 	maxCPU := runtime.NumCPU()
 	if maxWorkers < 1 || maxWorkers > maxCPU {
-		fmt.Printf("[info] maxWorkers value has been changed from %d to %d\n", maxWorkers, maxCPU)
+		printWarn("maxWorkers value has been changed from %d to %d", maxWorkers, maxCPU)
 		maxWorkers = maxCPU
 	}
 
@@ -334,9 +406,9 @@ func processFiles(inputPath, outputPath string,
 		close(errorsCh)
 		<-done
 		successCount := totalTasks - len(errList)
-		fmt.Printf("\nOperation completed! %d files, %d success, %d errors\n", totalTasks, successCount, len(errList))
+		printInfo("Operation completed! %d files, %d success, %d errors", totalTasks, successCount, len(errList))
 		for _, e := range errList {
-			fmt.Printf("[error] %v\n", e)
+			printError("%v", e)
 		}
 
 		if len(errList) > 0 {
@@ -347,7 +419,7 @@ func processFiles(inputPath, outputPath string,
 	if info.IsDir() {
 		filepath.WalkDir(inputPath, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
-				fmt.Printf("[error] Error accessing path %s: %v\n", path, err)
+				printError("Error accessing path %s: %v", path, err)
 				return nil
 			}
 			if d.IsDir() {
@@ -393,12 +465,19 @@ func worker(tasks <-chan task, errors chan<- error, wg *sync.WaitGroup) {
 }
 
 func waitForKey() {
-	fmt.Println("\nPress Enter to continue...")
+	fmt.Print("\n\nPress Enter to continue...")
 
 	var b [1]byte
-	_, err := os.Stdin.Read(b[:])
-	if err != nil {
-		return
+
+	for {
+		_, err := os.Stdin.Read(b[:])
+		if err != nil {
+			return
+		}
+
+		if b[0] == '\n' {
+			break
+		}
 	}
 }
 
@@ -447,9 +526,9 @@ func dragAndDropMode(paths []string, maxWorkers int, compressType int) {
 func drawMenu(options []string, selected int) {
 	for i, option := range options {
 		if i == selected {
-			fmt.Printf("> %s\n", option)
+			fmt.Printf(esc_color_cyan+">  %s"+esc_color_reset+"\n", option)
 		} else {
-			fmt.Printf("  %s\n", option)
+			fmt.Printf("  %s \n", option)
 		}
 	}
 }
@@ -457,14 +536,14 @@ func drawMenu(options []string, selected int) {
 func interactiveMode(maxWorkers int) {
 	keysEvents, err := keyboard.GetKeys(10)
 	if err != nil {
-		fmt.Printf("[error] Failed to initialize keyboard: %v\n", err)
+		printError("Failed to initialize keyboard: %v", err)
 		return
 	}
 	defer keyboard.Close()
 
-	fmt.Print("\033[?25l")       // hide cursor
-	defer fmt.Print("\033[?25h") // show cursor
-	fmt.Print("\033[2J\033[H")   // clear once
+	fmt.Print(esc_cursorHide)
+	defer fmt.Print(esc_cursorShow)
+	fmt.Print(esc_clearAndHome)
 
 	options := []string{
 		"Compress",
@@ -474,13 +553,13 @@ func interactiveMode(maxWorkers int) {
 	selectedIndex := 0
 
 	for {
-		fmt.Printf("\033[H%s\n\nUsage: dvpl [-h] - To get help.\nPress Ctrl+C or Esc to exit.\n\n", dvplInf)
+		fmt.Printf(esc_cursorHome+"%s\n\nUsage: %sdvpl%s %s[-h]%s - To get help.\nPress Ctrl+C or Esc to exit.\n\n", dvplInf, esc_color_green, esc_color_reset, esc_color_cyan, esc_color_reset)
 
 		drawMenu(options, selectedIndex)
 
 		event := <-keysEvents
 		if event.Err != nil {
-			fmt.Printf("[error] Keyboard error: %v\n", event.Err)
+			printError("Keyboard error: %v", event.Err)
 			return
 		}
 
@@ -496,13 +575,14 @@ func interactiveMode(maxWorkers int) {
 				selectedIndex = 0
 			}
 		case keyboard.KeyEnter:
-			fmt.Print("\033[2J\033[H")
+			fmt.Print(esc_clearAndHome)
 			switch selectedIndex {
 			case 0:
 				compressInteractive(keysEvents, maxWorkers)
 			case 1:
 				decompressInteractive(maxWorkers)
 			case 2:
+				keyboard.Close()
 				flag.Usage()
 				waitForKey()
 			}
@@ -514,9 +594,9 @@ func interactiveMode(maxWorkers int) {
 }
 
 func compressInteractive(keysEvents <-chan keyboard.KeyEvent, maxWorkers int) {
-	fmt.Print("\033[?25l")
-	defer fmt.Print("\033[?25h")
-	fmt.Print("\033[2J\033[H")
+	fmt.Print(esc_cursorHide)
+	defer fmt.Print(esc_cursorShow)
+	fmt.Print(esc_clearAndHome)
 
 	options := []string{
 		"[0] none",
@@ -527,13 +607,13 @@ func compressInteractive(keysEvents <-chan keyboard.KeyEvent, maxWorkers int) {
 	selectedIndex := 1
 
 	for {
-		fmt.Printf("\033[H%s\n\nSelect compression type.\nPress Ctrl+C or Esc to exit.\n\n", dvplInf)
+		fmt.Printf(esc_cursorHome+"%s\n\nSelect compression type.\nPress Ctrl+C or Esc to exit.\n\n", dvplInf)
 
 		drawMenu(options, selectedIndex)
 
 		event := <-keysEvents
 		if event.Err != nil {
-			fmt.Printf("[error] Keyboard error: %v\n", event.Err)
+			printError("Keyboard error: %v", event.Err)
 			return
 		}
 
@@ -549,7 +629,7 @@ func compressInteractive(keysEvents <-chan keyboard.KeyEvent, maxWorkers int) {
 				selectedIndex = 0
 			}
 		case keyboard.KeyEnter:
-			fmt.Print("\033[2J\033[H")
+			fmt.Print(esc_clearAndHome)
 			selectedCompressionType := compressionTypes[selectedIndex]
 			processFiles(".", ".", Pack, false, true, selectedCompressionType, nil, nil, nil, maxWorkers, false, true)
 			return
