@@ -2,6 +2,7 @@
 
 package terminal
 
-func EnableVirtualTerminal() {
+func EnableVirtualTerminal() bool {
 	// Linux
+	return true
 }

@@ -22,11 +22,12 @@ import (
 )
 
 const (
-	dvplExt = ".dvpl"
-	dvplInf = esc_color_green + "DvplGo 2.1.4 x64" + esc_color_reset + " | " + esc_color_cyan + "Copyright (c) 2026 Qirashi" + esc_color_reset
+	dvplExt   = ".dvpl"
+	name      = "DvplGo 2.1.5 x64"
+	copyright = "Copyright (c) 2026 Qirashi"
 )
 
-const (
+var (
 	esc_cursorHide   = "\033[?25l"
 	esc_cursorShow   = "\033[?25h"
 	esc_screenClear  = "\033[2J"
@@ -38,10 +39,26 @@ const (
 	esc_color_yellow = "\033[33m"
 	esc_color_red    = "\033[31m"
 	esc_color_green  = "\033[32m"
+
+	dvplInf = esc_color_green + name + esc_color_reset + " | " + esc_color_cyan + copyright + esc_color_reset
 )
 
 func main() {
-	terminal.EnableVirtualTerminal()
+	if !terminal.EnableVirtualTerminal() {
+		esc_cursorHide = ""
+		esc_cursorShow = ""
+		esc_screenClear = ""
+		esc_cursorHome = ""
+		esc_clearAndHome = ""
+
+		esc_color_reset = ""
+		esc_color_cyan = ""
+		esc_color_yellow = ""
+		esc_color_red = ""
+		esc_color_green = ""
+
+		dvplInf = esc_color_green + name + esc_color_reset + " | " + esc_color_cyan + copyright + esc_color_reset
+	}
 
 	compressFlag := flag.Bool("c", false, "")
 	decompressFlag := flag.Bool("d", false, "")
@@ -62,21 +79,21 @@ func main() {
 
 Usage: %sdvpl%s %s(-c|-d) -i%s <path> %s[options]%s
 %s[main options]%s
-  %s-c%s                  Compress files into .dvpl format.
-  %s-d%s                  Decompress .dvpl files.
-  %s-i%s <path>           Input file or directory.
-  %s-o%s <path>           Output file or directory (default: same as -i).
+  %s-c%s               Compress files into .dvpl format.
+  %s-d%s               Decompress .dvpl files.
+  %s-i%s <path>        Input file or directory.
+  %s-o%s <path>        Output file or directory (default: same as -i).
 
 %s[general options]%s
-  %s-filter%s <masks>     Process only files matching given patterns, e.g. "*.sc2,*.scg".
-  %s-ignore%s <masks>     Skip files matching given patterns, e.g. "*.exe,*.dll".
-  %s-keep-original%s      Do not delete original files after processing.
-  %s-m%s <number>         Max parallel workers (default 2, max %d).
-  %s-trust-data%s         Skip CRC and some integrity checks.
+  %s-filter%s <masks>  Process only files matching given patterns, e.g. "*.sc2,*.scg".
+  %s-ignore%s <masks>  Skip files matching given patterns, e.g. "*.exe,*.dll".
+  %s-keep-original%s   Do not delete original files after processing.
+  %s-m%s <number>      Max parallel workers (default 2, max %d).
+  %s-trust-data%s      Skip CRC and some integrity checks.
 
 %s[compress options]%s
-  %s-compress%s <type>    Compression type: 0=none, 1=lz4hc, 2=lz4, (default 1).
-  %s-forced-compress%s    Force compression even if result is larger than original.
+  %s-compress%s <type>  Compression type: 0=none, 1=lz4hc, 2=lz4, (default 1).
+  %s-forced-compress%s  Force compression even if result is larger than original.
   %s-ignore-compress%s <masks>
                       Disable compression for files matching these patterns, e.g. "*.webp".
 

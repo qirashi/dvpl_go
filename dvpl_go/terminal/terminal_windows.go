@@ -8,17 +8,21 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-func EnableVirtualTerminal() {
+func EnableVirtualTerminal() bool {
 	handle := windows.Handle(os.Stdout.Fd())
 
 	var mode uint32
-
 	err := windows.GetConsoleMode(handle, &mode)
 	if err != nil {
-		return
+		return false
 	}
 
 	mode |= windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING
 
-	_ = windows.SetConsoleMode(handle, mode)
+	err = windows.SetConsoleMode(handle, mode)
+	if err != nil {
+		return false
+	}
+
+	return true
 }
