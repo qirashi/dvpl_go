@@ -55,38 +55,33 @@
 ```cmd
 R:\Github\dvpl_go\out>dvpl.exe -h
 
-dvpl_go 2.1.2 x64 | Copyright (c) 2026 Qirashi
+DvplGo 2.1.5 x64 | Copyright (c) 2026 Qirashi
 
-Usage: dvpl [options]
-[Options]:
-  -c    Compress .dvpl files.
-  -compress int
-        Compression type: 0 (none), 1 (lz4hc), 2 (lz4) | (default 1)
-  -d    Decompress .dvpl files.
-  -filter string
-        List of file patterns to include. ("*.sc2,*.scg")
-  -forced-compress
-        Force compression even if the result is larger than the original.
-  -i string
-        Input path. (file or directory)
-  -ignore string
-        List of file patterns to ignore. ("*.exe,*.dll")
-  -ignore-compress string
-        List of file patterns for which compression should be disabled. ("*.webp")
-  -keep-original
-        Keep original files.
-  -m int
-        Maximum number of parallel workers (12). Minimum 1, recommended 2 | (default 2)
-  -o string
-        Output path. (file or directory)
-  -trust-data
-        CRC and some checks are ignored.
+Usage: dvpl (-c|-d) -i <path> [options]
+[main options]
+  -c               Compress files into .dvpl format.
+  -d               Decompress .dvpl files.
+  -i <path>        Input file or directory.
+  -o <path>        Output file or directory (default: same as -i).
 
-Examples:
-        Compress   : dvpl -c -i ./in_dir -compress 1
-        Decompress : dvpl -d -i ./in_dir -o ./out_dir
-        Filter     : dvpl -d -i ./in_dir -o ./out_dir -filter "*.sc2,*.scg"
-        Ignore     : dvpl -c -i ./in_dir -ignore "*.exe,*.dll"
+[general options]
+  -filter <masks>  Process only files matching given patterns, e.g. "*.sc2,*.scg".
+  -ignore <masks>  Skip files matching given patterns, e.g. "*.exe,*.dll".
+  -keep-original   Do not delete original files after processing.
+  -m <number>      Max parallel workers (default 2, max 12).
+  -trust-data      Skip CRC and some integrity checks.
+
+[compress options]
+  -compress <type>  Compression type: 0=none, 1=lz4hc, 2=lz4, (default 1).
+  -forced-compress  Force compression even if result is larger than original.
+  -ignore-compress <masks>
+                    Disable compression for files matching these patterns, e.g. "*.webp".
+
+[examples]
+  Compress   : dvpl -c -i ./input -compress 1
+  Decompress : dvpl -d -i ./input -o ./output
+  Filter     : dvpl -d -i ./input -o ./output -filter "*.sc2,*.scg"
+  Ignore     : dvpl -c -i ./input -ignore "*.exe,*.dll"
 ```
 
 ### Описание команд

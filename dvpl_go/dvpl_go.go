@@ -95,7 +95,7 @@ Usage: %sdvpl%s %s(-c|-d) -i%s <path> %s[options]%s
   %s-compress%s <type>  Compression type: 0=none, 1=lz4hc, 2=lz4, (default 1).
   %s-forced-compress%s  Force compression even if result is larger than original.
   %s-ignore-compress%s <masks>
-                      Disable compression for files matching these patterns, e.g. "*.webp".
+                    Disable compression for files matching these patterns, e.g. "*.webp".
 
 %s[examples]%s
   Compress   : dvpl -c -i ./input -compress 1
