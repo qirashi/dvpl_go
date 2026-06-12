@@ -848,7 +848,7 @@ func createMenuRoot(path string) error {
 
 	defer key.Close()
 
-	err = key.SetStringValue("MUIVerb", "Dvpl Tools Private")
+	err = key.SetStringValue("MUIVerb", "Dvpl Tools")
 
 	if err != nil {
 		return err
