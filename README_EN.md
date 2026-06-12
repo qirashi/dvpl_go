@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>dvpl_go <a href="README.md">RU</a> | <a href="README_EN.md">EN</a></h1>
+  <h1>dvpl_go <a href="README.md">RU</a> | [EN]</h1>
   <br>
   <img src="https://img.shields.io/github/downloads/qirashi/dvpl_go/total?logo=github&label=Downloads&style=for-the-badge" alt="Downloads">
   <img src="https://img.shields.io/github/license/qirashi/dvpl_go?style=for-the-badge" alt="License">
