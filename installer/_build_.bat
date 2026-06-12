@@ -6,6 +6,9 @@
 @echo off
 chcp 65001
 
+copy /Y "..\dvpl_go\dvpl_go.ico" "./assets\dvpl_go.ico"
+copy /Y "..\dvpl_go\out\dvpl-windows-x86_64\dvpl.exe" "./assets\dvpl.exe"
+
 echo Modernizing code...
 go fix ./...
 
