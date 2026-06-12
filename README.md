@@ -1,13 +1,13 @@
 <div align="center">
-  # dvpl_go [RU] | [EN](README_EN.md)
-<br>
+  <h1>dvpl_go [RU] | <a href="README_EN.md">EN</a></h1>
+  <br>
   <img src="https://img.shields.io/github/downloads/qirashi/dvpl_go/total?logo=github&label=Downloads&style=for-the-badge" alt="Downloads">
   <img src="https://img.shields.io/github/license/qirashi/dvpl_go?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/github/last-commit/qirashi/dvpl_go?style=for-the-badge" alt="Last Commit">
+  <img src="https://img.shields.io/github/languages/code-size/qirashi/dvpl_go?style=for-the-badge&label=Code%20Size" alt="Code Size">
   <a href="https://github.com/qirashi/dvpl_go/stargazers">
     <img src="https://img.shields.io/github/stars/qirashi/dvpl_go?style=for-the-badge&logo=github&color=ffca28&labelColor=24292e" alt="Stars">
   </a>
-  <img src="https://img.shields.io/github/languages/code-size/qirashi/dvpl_go?style=for-the-badge&label=Code%20Size" alt="Code Size">
 </div>
 <br>
 
