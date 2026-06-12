@@ -1,14 +1,16 @@
 <div align="center">
-
-![Downloads](https://img.shields.io/github/downloads/qirashi/dvpl_go/total?logo=github&label=Downloads&style=for-the-badge)
-![License](https://img.shields.io/github/license/qirashi/dvpl_go?style=for-the-badge)
-![Last Commit](https://img.shields.io/github/last-commit/qirashi/dvpl_go?style=for-the-badge)
-![Stars](https://img.shields.io/github/stars/qirashi/dvpl_go?style=for-the-badge&logo=github)
-![Code Size](https://img.shields.io/github/languages/code-size/qirashi/dvpl_go?style=for-the-badge&label=Code%20Size)
-
+  # dvpl_go [RU](README.md) | [EN]
+<br>
+  <img src="https://img.shields.io/github/downloads/qirashi/dvpl_go/total?logo=github&label=Downloads&style=for-the-badge" alt="Downloads">
+  <img src="https://img.shields.io/github/license/qirashi/dvpl_go?style=for-the-badge" alt="License">
+  <img src="https://img.shields.io/github/last-commit/qirashi/dvpl_go?style=for-the-badge" alt="Last Commit">
+  <a href="https://github.com/qirashi/dvpl_go/stargazers">
+    <img src="https://img.shields.io/github/stars/qirashi/dvpl_go?style=for-the-badge&logo=github&color=ffca28&labelColor=24292e" alt="Stars">
+  </a>
+  <img src="https://img.shields.io/github/languages/code-size/qirashi/dvpl_go?style=for-the-badge&label=Code%20Size" alt="Code Size">
 </div>
+<br>
 
-# dvpl_go [RU](README.md) | [EN]
   > [!NOTE]
   > The converter uses the [lz4](https://github.com/lz4/lz4) library to improve compression speed and quality.  
   > The format has limitations on the size of compressed data!  
