@@ -6,13 +6,15 @@
 @echo off
 chcp 65001
 
-echo Modernizing code...
+echo Modifying code...
 go fix ./...
 
 echo Starting build...
-set CC=
-set CXX=
+set CC=gcc
+set CXX=g++
 set CGO_ENABLED=1
+set CGO_CFLAGS=-ffunction-sections -fdata-sections
+set CGO_LDFLAGS=-Wl,--gc-sections
 set GOOS=windows
 set GOARCH=amd64
 go build -o ./out/dvpl-windows-x86_64/dvpl.exe -buildvcs=false -ldflags="-s -w -buildid=" -trimpath -buildmode=exe -tags=release -asmflags="-trimpath" -mod=readonly dvpl_go.go

@@ -13,6 +13,8 @@ echo Starting build...
 set CC=zig cc -target x86_64-linux
 set CXX=zig c++ -target x86_64-linux
 set CGO_ENABLED=1
+set CGO_CFLAGS=-ffunction-sections -fdata-sections
+set CGO_LDFLAGS=-Wl,--gc-sections
 set GOOS=linux
 set GOARCH=amd64
 go build -o ./out/dvpl-linux-x86_64/dvpl -buildvcs=false -ldflags="-s -w -buildid=" -trimpath -buildmode=exe -tags=release -asmflags="-trimpath" -mod=readonly dvpl_go.go
