@@ -3,13 +3,13 @@
 :: Project: dvpl_go
 
 
-echo off
+@echo off
 chcp 65001
 
-echo Модернизация кода...
+echo Modifying code...
 go fix ./...
 
-echo Начинаю сборку.
+echo Starting build...
 set CC=zig cc -target x86_64-linux
 set CXX=zig c++ -target x86_64-linux
 set CGO_ENABLED=1
@@ -17,9 +17,9 @@ set GOOS=linux
 set GOARCH=amd64
 go build -o ./out/dvpl-linux-x86_64/dvpl -buildvcs=false -ldflags="-s -w -buildid=" -trimpath -buildmode=exe -tags=release -asmflags="-trimpath" -mod=readonly dvpl_go.go
 if %ERRORLEVEL% neq 0 (
-    echo Ошибка: Сборка завершилась с ошибкой. Код ошибки: %ERRORLEVEL%
+    echo The build failed with error: %ERRORLEVEL%
     exit /b %ERRORLEVEL%
 )
-echo Сборка выполнена успешно.
+echo The build completed successfully.
 
 @pause
