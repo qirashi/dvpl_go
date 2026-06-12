@@ -135,7 +135,7 @@ Usage: %sdvpl%s %s(-c|-d) -i%s <path> %s[options]%s
 	if envCompress := os.Getenv("DVPL_COMPRESS_TYPE"); envCompress != "" {
 		if val, err := strconv.Atoi(envCompress); err == nil {
 			*compressType = val
-			if *compressType < 0 || *compressType > 5 {
+			if *compressType < 0 || *compressType > 3 {
 				printWarn("Invalid compression type: %d. Using valid: 1.", *compressType)
 				*compressType = 1
 			}
@@ -156,9 +156,9 @@ Usage: %sdvpl%s %s(-c|-d) -i%s <path> %s[options]%s
 
 	flag.Parse()
 
-	if *compressType < 0 || *compressType > 5 {
+	if *compressType < 0 || *compressType > 3 {
 		printWarn("Invalid compression type: %d. Using valid: 1.", *compressType)
-		*compressType = 5
+		*compressType = 1
 	}
 
 	if (*compressFlag && *decompressFlag) || (!*compressFlag && !*decompressFlag) {
