@@ -9,7 +9,7 @@ FILETYPE 0x1             // 0x1 = VFT_APP (обычное приложение, 
 		BLOCK "040904B0" // Язык и кодировка: 0x0409=Английский (США), 0x04B0=Unicode (UTF-16)
 		{
 			VALUE "CompanyName", "Qirashi"
-			VALUE "FileDescription", "DVPL compression/decompression tool."
+			VALUE "FileDescription", "CLI tool for compressing/decompressing DVPL."
 			VALUE "FileVersion", "2.1.5.0"
 			VALUE "InternalName", "dvpl.exe"
 			VALUE "LegalCopyright", "Copyright (c) 2026 Qirashi"

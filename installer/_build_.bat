@@ -30,6 +30,9 @@ if %errorlevel% == 0 (
     echo Resource Hacker found, executing commands...
     ResourceHacker -open ./out/installer.exe -save ./out/installer.exe -action addoverwrite -res ".\installer.ico" -mask ICONGROUP,MAINICON,
     ResourceHacker -open ./out/installer.exe -save ./out/installer.exe -action addoverwrite -res ".\installer.manifest" -mask MANIFEST,1,
+
+    ResourceHacker -open "./installer.rc" -save "./installer.res" -action compile -log CONSOLE
+    ResourceHacker -open ./out/installer.exe -save ./out/installer.exe -action addoverwrite -res ".\installer.res" -mask VERSIONINFO,
 ) else (
     echo Error: Resource Hacker not found in PATH.
 )
