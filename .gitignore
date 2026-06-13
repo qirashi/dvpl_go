@@ -20,6 +20,10 @@
 # Go workspace file
 go.work
 
+# Others
+*.res
+*.res~
+
 dvpl_go/dvpl_c/lz4_win64_dev
 dvpl_go/dvpl_c/lz4_linux_dev
 dvpl_go/dvpl_c/lz4_win64_release

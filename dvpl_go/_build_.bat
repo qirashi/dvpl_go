@@ -28,6 +28,10 @@ where ResourceHacker >nul 2>nul
 if %errorlevel% == 0 (
     echo Resource Hacker found, executing commands...
     ResourceHacker -open ./out/dvpl-windows-x86_64/dvpl.exe -save ./out/dvpl-windows-x86_64/dvpl.exe -action addoverwrite -res ".\dvpl_go.ico" -mask ICONGROUP,MAINICON,
+    ResourceHacker -open ./out/dvpl-windows-x86_64/dvpl.exe -save ./out/dvpl-windows-x86_64/dvpl.exe -action addoverwrite -res ".\dvpl_go.manifest" -mask MANIFEST,1,
+
+    ResourceHacker -open "./dvpl_go.rc" -save "./dvpl_go.res" -action compile -log CONSOLE
+    ResourceHacker -open ./out/dvpl-windows-x86_64/dvpl.exe -save ./out/dvpl-windows-x86_64/dvpl.exe -action addoverwrite -res ".\dvpl_go.res" -mask VERSIONINFO,
 ) else (
     echo Error: Resource Hacker not found in PATH.
 )

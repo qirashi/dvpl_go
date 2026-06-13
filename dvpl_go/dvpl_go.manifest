@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-	<assemblyIdentity name="Qirashi.DvplGo" version="1.0.0.0" processorArchitecture="amd64" type="win32"/>
+	<assemblyIdentity name="Qirashi.DvplGo" version="2.1.5.0" processorArchitecture="amd64" type="win32"/>
 	<trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
 		<security>
 			<requestedPrivileges>
-				<requestedExecutionLevel level="requireAdministrator" uiAccess="false"/>
+				<requestedExecutionLevel level="asInvoker" uiAccess="false"/>
 			</requestedPrivileges>
 		</security>
 	</trustInfo>

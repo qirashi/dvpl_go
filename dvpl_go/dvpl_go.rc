@@ -1,0 +1,25 @@
+1 VERSIONINFO
+FILEVERSION 2,1,5,0      // Версия файла (major,minor,patch,build)
+PRODUCTVERSION 2,1,5,0   // Версия продукта (обычно совпадает с FILEVERSION)
+FILEOS 0x40004           // 0x40004 = Windows NT (0x00040000) + GUI-приложение (0x00000004)
+FILETYPE 0x1             // 0x1 = VFT_APP (обычное приложение, не драйвер, не DLL)
+{
+	BLOCK "StringFileInfo"
+	{
+		BLOCK "040904B0" // Язык и кодировка: 0x0409=Английский (США), 0x04B0=Unicode (UTF-16)
+		{
+			VALUE "CompanyName", "Qirashi"
+			VALUE "FileDescription", "DVPL compression/decompression tool."
+			VALUE "FileVersion", "2.1.5.0"
+			VALUE "InternalName", "dvpl.exe"
+			VALUE "LegalCopyright", "Copyright (c) 2026 Qirashi"
+			VALUE "OriginalFilename", "dvpl.exe"
+			VALUE "ProductName", "DvplGo"
+			VALUE "ProductVersion", "2.1.5.0"
+		}
+	}
+	BLOCK "VarFileInfo"
+	{
+		VALUE "Translation", 0x0409, 0x04B0
+	}
+}
