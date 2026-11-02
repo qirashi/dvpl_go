@@ -202,6 +202,9 @@ func Unpack(data []byte, trustData bool) ([]byte, uint32, error) {
 		if err != nil {
 			return nil, ptype, fmt.Errorf("failed to decompress LZ4 data: %v", err)
 		}
+		if len(result) != int(unpacked) {
+			return nil, ptype, fmt.Errorf("size mismatch: decompressed %d bytes, expected %d", len(result), unpacked)
+		}
 	default:
 		return nil, ptype, fmt.Errorf("unsupported compression type: %d", ptype)
 	}
