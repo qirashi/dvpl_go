@@ -22,9 +22,11 @@ import (
 )
 
 const (
-	dvplExt   = ".dvpl"
-	name      = "DvplGo 2.1.5 x64"
-	copyright = "Copyright (c) 2026 Qirashi"
+	dvplExt = ".dvpl"
+
+	defaultCompressType = 1
+	name                = "DvplGo 2.1.5 x64"
+	copyright           = "Copyright (c) 2026 Qirashi"
 )
 
 var (
@@ -69,7 +71,7 @@ func main() {
 	inputPath := flag.String("i", "", "")
 	outputPath := flag.String("o", "", "")
 	keepOriginal := flag.Bool("keep-original", false, "")
-	compressType := flag.Int("compress", 1, "")
+	compressType := flag.Int("compress", defaultCompressType, "")
 	ignorePatterns := flag.String("ignore", "", "")
 	filterPatterns := flag.String("filter", "", "")
 	ignoreCompressPatterns := flag.String("ignore-compress", "", "")
@@ -139,9 +141,9 @@ Usage: %sdvpl%s %s(-c|-d) -i%s <path> %s[options]%s
 	if envCompress := os.Getenv("DVPL_COMPRESS_TYPE"); envCompress != "" {
 		if val, err := strconv.Atoi(envCompress); err == nil {
 			*compressType = val
-			if *compressType < 0 || *compressType > 3 {
-				printWarn("Invalid compression type: %d. Using valid: 1.", *compressType)
-				*compressType = 1
+			if !isValidCompressType(*compressType) {
+				printWarn("Invalid compression type: %d. Using default: %d.", *compressType, defaultCompressType)
+				*compressType = defaultCompressType
 			}
 		}
 	}
@@ -160,9 +162,9 @@ Usage: %sdvpl%s %s(-c|-d) -i%s <path> %s[options]%s
 
 	flag.Parse()
 
-	if *compressType < 0 || *compressType > 3 {
-		printWarn("Invalid compression type: %d. Using valid: 1.", *compressType)
-		*compressType = 1
+	if !isValidCompressType(*compressType) {
+		printWarn("Invalid compression type: %d. Using default: %d.", *compressType, defaultCompressType)
+		*compressType = defaultCompressType
 	}
 
 	if (*compressFlag && *decompressFlag) || (!*compressFlag && !*decompressFlag) {
@@ -208,6 +210,14 @@ Usage: %sdvpl%s %s(-c|-d) -i%s <path> %s[options]%s
 	} else if *decompressFlag {
 		processFiles(*inputPath, *outputPath, Unpack, *keepOriginal, *compressFlag, *compressType, ignoreList, ignoreCompressList, filterList, *maxWorkers, *forcedCompress, *trustData)
 	}
+}
+
+func isValidCompressType(t int) bool {
+	switch t {
+	case 0, 1, 2:
+		return true
+	}
+	return false
 }
 
 func printInfo(format string, a ...any) {

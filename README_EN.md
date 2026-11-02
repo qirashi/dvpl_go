@@ -32,7 +32,7 @@
   Environment variables can store two converter settings, `DVPL_MAX_WORKERS` and `DVPL_COMPRESS_TYPE`, to specify the number of parallel running processes and the compression type, respectively.
 
 - `DVPL_MAX_WORKERS` — Maximum number of parallel workers. (If the number is too large, it will be limited.)
-- `DVPL_COMPRESS_TYPE` — Specifies the compression level from 0 to 2. (If the type does not exist, an error will occur.)
+- `DVPL_COMPRESS_TYPE` — Specifies the compression level from 0 to 2. (If the type does not exist, a warning is shown and type 1 is used.)
 
 How to set variables:
 1. **Create manually**
