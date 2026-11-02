@@ -71,6 +71,9 @@ Usage: dvpl (-c|-d) -i <path> [options]
   -m <number>      Max parallel workers (default 2, max 12).
   -trust-data      Skip CRC and some integrity checks.
 
+  Masks are matched against the file name only, not against the path:
+  use "*.sc2", not "sub/*.sc2".
+
 [compress options]
   -compress <type>  Compression type: 0=none, 1=lz4hc, 2=lz4, (default 1).
   -forced-compress  Force compression even if result is larger than original.
@@ -100,6 +103,7 @@ Usage: dvpl (-c|-d) -i <path> [options]
     - For example, you need to unpack only `*.webp` and `*.txt` into a separate folder.
     - It will look like this: `dvpl -d -i ./in -o ./out -filter "*.webp,*.txt" -keep-original -m 4`
     #### Wildcards for filters:
+    Patterns are matched against the file name only, not the path: `*.sc2`, not `sub/*.sc2`.
     - `*` — Any number of characters (except `/`).
     - `?` — One character.
     - `[abc]` — One of the specified characters.

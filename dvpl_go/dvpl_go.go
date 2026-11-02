@@ -97,6 +97,9 @@ Usage: %sdvpl%s %s(-c|-d) -i%s <path> %s[options]%s
   %s-m%s <number>      Max parallel workers (default 2, max %d).
   %s-trust-data%s      Skip CRC and some integrity checks.
 
+  Masks are matched against the file name only, not against the path:
+  use "*.sc2", not "sub/*.sc2".
+
 %s[compress options]%s
   %s-compress%s <type>  Compression type: 0=none, 1=lz4hc, 2=lz4, (default 1).
   %s-forced-compress%s  Force compression even if result is larger than original.

@@ -71,6 +71,9 @@ Usage: dvpl (-c|-d) -i <path> [options]
   -m <number>      Max parallel workers (default 2, max 12).
   -trust-data      Skip CRC and some integrity checks.
 
+  Masks are matched against the file name only, not against the path:
+  use "*.sc2", not "sub/*.sc2".
+
 [compress options]
   -compress <type>  Compression type: 0=none, 1=lz4hc, 2=lz4, (default 1).
   -forced-compress  Force compression even if result is larger than original.
@@ -100,6 +103,7 @@ Usage: dvpl (-c|-d) -i <path> [options]
     - Например вам нужно распаковать в отдельную папку только `*.webp` и `*.txt`.
     - Это будет выглядеть так: `dvpl -d -i ./in -o ./out -filter "*.webp,*.txt" -keep-original -m 4`
     #### Символы подстановки для фильтров:
+    Шаблоны сравниваются только с именем файла, а не с путём: `*.sc2`, а не `sub/*.sc2`.
     - `*` — любое количество символов (кроме `/`).
     - `?` — один символ.
     - `[abc]` — один из указанных символов.
