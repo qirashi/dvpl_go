@@ -180,7 +180,7 @@ func Unpack(data []byte, trustData bool) ([]byte, uint32, error) {
 	}
 
 	if uint32(payloadSize) != packed {
-		return nil, ptype, fmt.Errorf("packed size mismatch: got %d, expected %d", lenData, packed)
+		return nil, ptype, fmt.Errorf("packed size mismatch: got %d, expected %d", payloadSize, packed)
 	}
 
 	if !trustData && unpacked > (1<<30) { // > 1 GB
