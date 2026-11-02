@@ -53,6 +53,21 @@ func compressLZ4(data []byte, level int) ([]byte, error) {
 }
 
 func decompressLZ4(compressed []byte, uncompressedSize int) ([]byte, error) {
+	if uncompressedSize < 0 {
+		return nil, fmt.Errorf("invalid uncompressed size: %d", uncompressedSize)
+	}
+
+	if uncompressedSize == 0 {
+		if len(compressed) != 0 {
+			return nil, fmt.Errorf("invalid block: %d compressed bytes declare zero uncompressed size", len(compressed))
+		}
+		return []byte{}, nil
+	}
+
+	if len(compressed) == 0 {
+		return nil, fmt.Errorf("invalid block: no compressed data for %d uncompressed bytes", uncompressedSize)
+	}
+
 	uncompressed := make([]byte, uncompressedSize)
 	src := (*C.char)(unsafe.Pointer(&compressed[0]))
 	dst := (*C.char)(unsafe.Pointer(&uncompressed[0]))
