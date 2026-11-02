@@ -145,6 +145,8 @@ Usage: %sdvpl%s %s(-c|-d) -i%s <path> %s[options]%s
 				printWarn("Invalid compression type: %d. Using default: %d.", *compressType, defaultCompressType)
 				*compressType = defaultCompressType
 			}
+		} else {
+			printWarn("Ignoring DVPL_COMPRESS_TYPE=%q: not a number.", envCompress)
 		}
 	}
 
