@@ -403,11 +403,8 @@ func processFiles(inputPath, outputPath string,
 
 	var totalTasks int
 
-	addTask := func(path string, name string) {
+	enqueue := func(path string, outPath string, name string) {
 		totalTasks++
-		rel := strings.TrimPrefix(path, inputPath)
-		rel = strings.TrimPrefix(rel, string(filepath.Separator))
-		outPath := filepath.Join(outputPath, rel)
 
 		tasks <- task{
 			path:           path,
@@ -418,6 +415,12 @@ func processFiles(inputPath, outputPath string,
 			forcedCompress: forcedCompress,
 			trustData:      trustData,
 		}
+	}
+
+	addTask := func(path string, name string) {
+		rel := strings.TrimPrefix(path, inputPath)
+		rel = strings.TrimPrefix(rel, string(filepath.Separator))
+		enqueue(path, filepath.Join(outputPath, rel), name)
 	}
 
 	finishAndReturn := func() {
@@ -455,7 +458,15 @@ func processFiles(inputPath, outputPath string,
 			finishAndReturn()
 			return
 		}
-		addTask(inputPath, info.Name())
+
+		outPath := outputPath
+		if st, err := os.Stat(outputPath); err == nil && st.IsDir() {
+			outPath = filepath.Join(outputPath, info.Name())
+		} else if os.IsNotExist(err) && (strings.HasSuffix(outputPath, string(filepath.Separator)) || strings.HasSuffix(outputPath, "/")) {
+			outPath = filepath.Join(outputPath, info.Name())
+		}
+
+		enqueue(inputPath, outPath, info.Name())
 	}
 
 	finishAndReturn()
