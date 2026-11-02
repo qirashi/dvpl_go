@@ -41,9 +41,13 @@ var (
 	esc_color_green  = "\033[32m"
 
 	dvplInf = esc_color_green + name + esc_color_reset + " | " + esc_color_cyan + copyright + esc_color_reset
+
+	exitCode = 0
 )
 
 func main() {
+	defer func() { os.Exit(exitCode) }()
+
 	if !terminal.EnableVirtualTerminal() {
 		esc_cursorHide = ""
 		esc_cursorShow = ""
@@ -215,6 +219,7 @@ func printWarn(format string, a ...any) {
 }
 
 func printError(format string, a ...any) {
+	exitCode = 1
 	fmt.Printf(esc_color_red+"[error]"+esc_color_reset+" "+format+"\n", a...)
 }
 
