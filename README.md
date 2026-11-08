@@ -55,7 +55,7 @@
 ```cmd
 R:\Github\dvpl_go\out>dvpl.exe -h
 
-DvplGo 2.1.5 x64 | Copyright (c) 2026 Qirashi
+DvplGo 2.1.6 x64 | Copyright (c) 2026 Qirashi
 
 Usage: dvpl (-c|-d) -i <path> [options]
 [main options]

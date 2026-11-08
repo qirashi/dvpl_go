@@ -25,7 +25,7 @@ const (
 	dvplExt = ".dvpl"
 
 	defaultCompressType = 1
-	name                = "DvplGo 2.1.5 x64"
+	name                = "DvplGo 2.1.6 x64"
 	copyright           = "Copyright (c) 2026 Qirashi"
 )
 

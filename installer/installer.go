@@ -29,7 +29,7 @@ var exeData []byte
 // CONFIG =====================================================================
 
 const (
-	AppName           = "DvplGo 2.1.5 x64 | Copyright (c) 2026 Qirashi"
+	AppName           = "DvplGo 2.1.6 x64 | Copyright (c) 2026 Qirashi"
 	DefaultInstallDir = `C:\Tools\DvplGO`
 	RegRoot           = `Software\XInstaller\DVPLGO`
 )
